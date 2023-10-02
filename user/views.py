@@ -27,7 +27,7 @@ class UserView(APIView):
         })
     )
 
-    @swagger_auto_schema(method='post', operation_summary='注册接口', request_body=request_body, responses={0: response_schema})
+    @swagger_auto_schema(value='/api/user/login', method='post', operation_summary='注册接口', request_body=request_body, responses={0: response_schema})
     @csrf_exempt
     @api_view(['POST'])
     def register(request):
@@ -91,7 +91,7 @@ class UserView(APIView):
         })
     )
 
-    @swagger_auto_schema(value='/user/login', method='post', operation_summary='登录接口', request_body=request_body, responses={0: login_response_schema})
+    @swagger_auto_schema(value='/api/user/login', method='post', operation_summary='登录接口', request_body=request_body, responses={0: login_response_schema})
     @csrf_exempt
     @api_view(['POST'])
     def login(request):
