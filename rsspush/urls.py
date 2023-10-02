@@ -18,6 +18,7 @@ from django.urls import path, include, re_path
 from rest_framework import permissions
 from drf_yasg2.views import get_schema_view
 from drf_yasg2 import openapi
+import user.views
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -34,7 +35,8 @@ schema_view = get_schema_view(
 urlpatterns = [
     re_path(r'^api/doc(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('api/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),  # <-- 这里
-    path('api/user/', include('user.urls')),
+    path('api/user/login', user.views.UserView.login),
+    path('api/user/register', user.views.UserView.register),
     # path('api/push', include('push.urls')),
     # path('api/rss', include('rss.urls')),
 ]
