@@ -17,5 +17,7 @@ import rss.views
 from django.urls import path
 
 urlpatterns = [
-    path('get', rss.views.get_servers_ssl),
+    path('add', rss.views.RssView.addRss),
+    path('del', rss.views.RssView.delRss),
+    path('list', rss.views.RssView.listRss),
 ]

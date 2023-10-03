@@ -8,8 +8,6 @@ from drf_yasg2.utils import swagger_auto_schema
 from rest_framework.views import APIView
 import json, jwt, time
 
-logging.basicConfig(level=logging.DEBUG)
-
 
 class UserView(APIView):
     request_body = openapi.Schema(
@@ -24,10 +22,16 @@ class UserView(APIView):
         schema=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
             'code': openapi.Schema(type=openapi.TYPE_INTEGER, description='code'),
             'message': openapi.Schema(type=openapi.TYPE_STRING, description='message'),
+            'data': openapi.Schema(type=openapi.TYPE_OBJECT, description='data', properties={
+                'id': openapi.Schema(type=openapi.TYPE_INTEGER, description='id'),
+                'username': openapi.Schema(type=openapi.TYPE_STRING, description='username'),
+                'phone': openapi.Schema(type=openapi.TYPE_STRING, description='phone'),
+                'token': openapi.Schema(type=openapi.TYPE_STRING, description='token'),
+            }),
         })
     )
 
-    @swagger_auto_schema(value='/api/user/login', method='post', operation_summary='注册接口', request_body=request_body, responses={0: response_schema})
+    @swagger_auto_schema(value='/api/user/register', method='post', operation_summary='注册接口', request_body=request_body, responses={0: response_schema})
     @csrf_exempt
     @api_view(['POST'])
     def register(request):
@@ -66,32 +70,23 @@ class UserView(APIView):
                         Encry.update(password.encode('utf-8'))  # 字符串字节加密
                         password = Encry.hexdigest()  # 字符串加密
                         User.objects.create(phone=phone, username=phone, password=password)
+                        data = User.objects.get(phone=phone)
+                        data.token = jwt.encode({'id': str(data.id), 'password': password + str(time.time())}, 'rsspush', algorithm='HS256')
+                        data.save()
+                        logging.info('注册成功')
                         Response = {
                             "code": 0,
-                            "message": "注册成功"
+                            "message": "注册成功",
+                            "data": {
+                                "id": data.id,
+                                "username": data.username,
+                                "phone": str(data.phone.replace(phone[3:7], '****')),
+                                "token": str(data.token)
+                            }
                         }
         return JsonResponse(Response)
 
-    request_body = openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        required=['phone', 'password'],
-        properties={
-            'phone': openapi.Schema(type=openapi.TYPE_STRING, description='手机号'),
-            'password': openapi.Schema(type=openapi.TYPE_STRING, description='密码')
-        })
-    login_response_schema = openapi.Response(
-        description='Successful response',
-        schema=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
-            'code': openapi.Schema(type=openapi.TYPE_INTEGER, description='code'),
-            'data': openapi.Schema(type=openapi.TYPE_OBJECT, description='data', properties={
-                'username': openapi.Schema(type=openapi.TYPE_INTEGER, description='username'),
-                'phone': openapi.Schema(type=openapi.TYPE_INTEGER, description='phone'),
-                'token': openapi.Schema(type=openapi.TYPE_INTEGER, description='token'),
-            }),
-        })
-    )
-
-    @swagger_auto_schema(value='/api/user/login', method='post', operation_summary='登录接口', request_body=request_body, responses={0: login_response_schema})
+    @swagger_auto_schema(value='/api/user/login',method='post', operation_summary='登录接口', request_body=request_body, responses={0: response_schema})
     @csrf_exempt
     @api_view(['POST'])
     def login(request):
@@ -106,6 +101,7 @@ class UserView(APIView):
             }
         else:
             if not (User.objects.filter(phone=phone)).count():
+                logging.error('该手机号没有注册')
                 Response = {
                     "code": 10005,
                     "message": "该手机号没有注册"
@@ -116,19 +112,23 @@ class UserView(APIView):
                 password = Encry.hexdigest()  # 字符串加密
                 data = User.objects.get(phone=phone)
                 if data.password != password:
+                    logging.error('密码错误')
                     Response = {
                         "code": 10006,
                         "message": "密码错误"
                     }
                 else:
-                    data.token = jwt.encode({'username': data.username, 'password': password + str(time.time())}, 'rsspush', algorithm='HS256')
+                    data.token = jwt.encode({'id': str(data.id), 'password': password + str(time.time())}, 'rsspush', algorithm='HS256')
                     data.save()
+                    logging.info('登录成功')
                     Response = {
                         "code": 0,
+                        "message": "登录成功",
                         "data": {
+                            "id": data.id,
                             "username": data.username,
-                            "phone": data.phone,
-                            "token": data.token
+                            "phone": str(data.phone.replace(phone[3:7], '****')),
+                            "token": str(data.token)
                         }
                     }
         return JsonResponse(Response)
