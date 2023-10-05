@@ -17,21 +17,25 @@ class UserView(APIView):
             'phone': openapi.Schema(type=openapi.TYPE_STRING, description='手机号'),
             'password': openapi.Schema(type=openapi.TYPE_STRING, description='密码')
         })
-    response_schema = openapi.Response(
+    access_response_schema = openapi.Response(
         description='Successful response',
         schema=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
             'code': openapi.Schema(type=openapi.TYPE_INTEGER, description='code'),
             'message': openapi.Schema(type=openapi.TYPE_STRING, description='message'),
             'data': openapi.Schema(type=openapi.TYPE_OBJECT, description='data', properties={
                 'id': openapi.Schema(type=openapi.TYPE_INTEGER, description='id'),
-                'username': openapi.Schema(type=openapi.TYPE_STRING, description='username'),
-                'phone': openapi.Schema(type=openapi.TYPE_STRING, description='phone'),
+                'username': openapi.Schema(type=openapi.TYPE_STRING, description='昵称'),
+                'phone': openapi.Schema(type=openapi.TYPE_STRING, description='手机号'),
                 'token': openapi.Schema(type=openapi.TYPE_STRING, description='token'),
             }),
         })
     )
 
-    @swagger_auto_schema(value='/api/user/register', method='post', operation_summary='注册接口', request_body=request_body, responses={0: response_schema})
+    def __init__(self, **kwargs):
+        super().__init__(kwargs)
+        self.body = None
+
+    @swagger_auto_schema(value='/api/user/register', method='post', operation_summary='注册接口', request_body=request_body, responses={0: access_response_schema, 201: 'None'})
     @csrf_exempt
     @api_view(['POST'])
     def register(request):
@@ -86,7 +90,7 @@ class UserView(APIView):
                         }
         return JsonResponse(Response)
 
-    @swagger_auto_schema(value='/api/user/login',method='post', operation_summary='登录接口', request_body=request_body, responses={0: response_schema})
+    @swagger_auto_schema(value='/api/user/login',method='post', operation_summary='登录接口', request_body=request_body, responses={0: access_response_schema, 201: 'None'})
     @csrf_exempt
     @api_view(['POST'])
     def login(request):
