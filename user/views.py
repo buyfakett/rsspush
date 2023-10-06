@@ -33,15 +33,15 @@ class UserView(APIView):
 
     def __init__(self, **kwargs):
         super().__init__(kwargs)
-        self.POST = None
         self.body = None
 
     @swagger_auto_schema(value='/api/user/register', method='post', operation_summary='注册接口', request_body=request_body, responses={0: access_response_schema, 201: 'None'})
     @csrf_exempt
     @api_view(['POST'])
     def register(self):
-        phone = self.POST.get('phone')
-        password = self.POST.get('password')
+        data = json.loads(self.body.decode('utf-8'))
+        phone = data['phone']
+        password = data['password']
         if phone is None or password is None or password == '' or phone == '':
             logging.error('请输入手机号和密码')
             Response = {
@@ -94,8 +94,9 @@ class UserView(APIView):
     @csrf_exempt
     @api_view(['POST'])
     def login(self):
-        phone = self.POST.get('phone')
-        password = self.POST.get('password')
+        data = json.loads(self.body.decode('utf-8'))
+        phone = data['phone']
+        password = data['password']
         if phone is None or password is None or password == '' or phone == '':
             logging.error('请输入手机号和密码')
             Response = {

@@ -3,10 +3,10 @@ from django.db import models
 
 class Rss(models.Model):
     user_id = models.IntegerField(help_text="user_id")
-    push_id = models.IntegerField(help_text="push_id")
-    rss_uri = models.CharField(max_length=20, help_text="rss的uri")
-    detection_time = models.IntegerField(help_text="检测的时间(分钟）")
-    timestamp = models.CharField(max_length=20, help_text="上次更新的时间戳")
+    push_id = models.IntegerField(help_text="push_id", null=True)
+    rss_uri = models.CharField(max_length=255, help_text="rss的uri")
+    detection_time = models.IntegerField(help_text="检测的时间(分钟）", null=True)
+    timestamp = models.CharField(max_length=20, help_text="上次更新的时间戳", null=True)
 
     class Meta:
         db_table = "rss"

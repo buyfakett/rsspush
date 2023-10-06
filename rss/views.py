@@ -1,11 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework import serializers, views, response
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from django.core.paginator import Paginator
-import json, logging, re
+import json, logging
 from django.http import JsonResponse
 from .models import Rss
 from user.models import User
@@ -73,13 +72,10 @@ class RssView(APIView):
 
     add_rss_request_body = openapi.Schema(
         type=openapi.TYPE_OBJECT,
-        required=['user_id', 'push_id', 'rss_uri', 'detection_time', 'timestamp'],
+        required=['user_id', 'rss_uri'],
         properties={
             'user_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='用户id'),
-            'push_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='推送表的id'),
             'rss_uri': openapi.Schema(type=openapi.TYPE_STRING, description='rss的uri'),
-            'detection_time': openapi.Schema(type=openapi.TYPE_INTEGER, description='检测的时间(分钟）', default=1),
-            'timestamp': openapi.Schema(type=openapi.TYPE_STRING, description='上次更新的时间戳'),
         })
 
     add_rss_access_response_schema = openapi.Response(
@@ -95,31 +91,46 @@ class RssView(APIView):
     @api_view(['POST'])
     def add_rss(self):
         data = json.loads(self.body.decode('utf-8'))
-        token = self.META.get('HTTP_AUTHORIZATION')
         user_id = data['user_id']
-        push_id = data['push_id']
         rss_uri = data['rss_uri']
-        detection_time = data['detection_time']
-        timestamp = data['timestamp']
+        token = self.META.get('HTTP_AUTHORIZATION')
         Response = json.loads(check_token(token))
         if Response['code'] == 0:
-            if user_id is None or user_id == '':
+            if user_id is None or user_id == '' or rss_uri is None or rss_uri == '':
+                logging.error('参数缺少')
                 Response = {
-                    "code": 10006,
-                    "message": "没有传user_id"
+                    "code": 10010,
+                    "message": "参数缺少"
                 }
+            else:
+                if not User.objects.get(id=user_id).token == token:
+                    logging.error('别用别人的token')
+                    Response = {
+                        "code": 10008,
+                        "message": "别用别人的token"
+                    }
+                else:
+                    if Rss.objects.create(user_id=user_id, rss_uri=rss_uri):
+                        logging.info('用户' + str(user_id) + '已新增rss')
+                        Response = {
+                            "code": 0,
+                            "message": "新增成功"
+                        }
+                    else:
+                        logging.error('新增rss失败')
+                        Response = {
+                            "code": 10011,
+                            "message": "新增rss失败"
+                        }
         return JsonResponse(Response)
 
     edit_rss_request_body = openapi.Schema(
         type=openapi.TYPE_OBJECT,
-        required=['id', 'user_id', 'push_id', 'rss_uri', 'detection_time', 'timestamp'],
+        required=['id', 'user_id', 'rss_uri'],
         properties={
             'id': openapi.Schema(type=openapi.TYPE_INTEGER, description='id'),
-            'user_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='用户id'),
-            'push_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='推送表的id'),
+            'user_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='user_id'),
             'rss_uri': openapi.Schema(type=openapi.TYPE_STRING, description='rss的uri'),
-            'detection_time': openapi.Schema(type=openapi.TYPE_INTEGER, description='检测的时间(分钟）', default=1),
-            'timestamp': openapi.Schema(type=openapi.TYPE_STRING, description='上次更新的时间戳'),
         })
 
     edit_rss_access_response_schema = openapi.Response(
@@ -135,20 +146,41 @@ class RssView(APIView):
     @api_view(['POST'])
     def edit_rss(self):
         data = json.loads(self.body.decode('utf-8'))
-        token = self.META.get('HTTP_AUTHORIZATION')
-        id = data['id']
         user_id = data['user_id']
-        push_id = data['push_id']
         rss_uri = data['rss_uri']
-        detection_time = data['detection_time']
-        timestamp = data['timestamp']
+        id = data['id']
+        token = self.META.get('HTTP_AUTHORIZATION')
         Response = json.loads(check_token(token))
         if Response['code'] == 0:
-            if user_id is None or user_id == '':
+            if id is None or id == '' or user_id is None or user_id == '' or rss_uri is None or rss_uri == '':
+                logging.error('参数缺少')
                 Response = {
-                    "code": 10006,
-                    "message": "没有传user_id"
+                    "code": 10010,
+                    "message": "参数缺少"
                 }
+            else:
+                if not User.objects.get(id=user_id).token == token:
+                    logging.error('别用别人的token')
+                    Response = {
+                        "code": 10008,
+                        "message": "别用别人的token"
+                    }
+                else:
+                    if not Rss.objects.filter(id=id).count():
+                        logging.error('没有这数据')
+                        Response = {
+                            "code": 10012,
+                            "message": "没有这数据"
+                        }
+                    else:
+                        data = Rss.objects.get(id=id)
+                        data.rss_uri = rss_uri
+                        data.save()
+                        logging.error('修改成功')
+                        Response = {
+                            "code": 0,
+                            "message": "修改成功"
+                        }
         return JsonResponse(Response)
 
     delete_rss_request_body = openapi.Schema(
@@ -172,8 +204,9 @@ class RssView(APIView):
     @api_view(['DELETE'])
     def delete_rss(self):
         token = self.META.get('HTTP_AUTHORIZATION')
-        user_id = self.POST.get('user_id')
-        id = self.POST.get('id')
+        data = json.loads(self.body.decode('utf-8'))
+        user_id = data['user_id']
+        id = data['id']
         Response = json.loads(check_token(token))
         if Response['code'] == 0:
             if id is None or id == '':
@@ -204,7 +237,7 @@ class RssView(APIView):
                                 "message": "删除成功"
                             }
                         else:
-                            logging.error('别用别人的token')
+                            logging.error('删除失败')
                             Response = {
                                 "code": 10009,
                                 "message": "删除失败"
