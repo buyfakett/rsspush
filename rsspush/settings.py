@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'drf_yasg2',
     'user',
     'rss',
-    # 'push'
+    'push'
 ]
 
 REST_FRAMEWORK = {
