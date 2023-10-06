@@ -2,11 +2,10 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from django.views.decorators.csrf import csrf_exempt
 from .models import User
-import re, logging, hashlib
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework.views import APIView
-import json, jwt, time
+import json, jwt, time, re, logging, hashlib
 from util.yaml_util import read_yaml
 
 
@@ -34,15 +33,15 @@ class UserView(APIView):
 
     def __init__(self, **kwargs):
         super().__init__(kwargs)
+        self.POST = None
         self.body = None
 
     @swagger_auto_schema(value='/api/user/register', method='post', operation_summary='注册接口', request_body=request_body, responses={0: access_response_schema, 201: 'None'})
     @csrf_exempt
     @api_view(['POST'])
     def register(self):
-        data = json.loads(self.body.decode('utf-8'))
-        phone = data['phone']
-        password = data['password']
+        phone = self.POST.get('phone')
+        password = self.POST.get('password')
         if phone is None or password is None or password == '' or phone == '':
             logging.error('请输入手机号和密码')
             Response = {
@@ -95,9 +94,8 @@ class UserView(APIView):
     @csrf_exempt
     @api_view(['POST'])
     def login(self):
-        data = json.loads(self.body.decode('utf-8'))
-        phone = data['phone']
-        password = data['password']
+        phone = self.POST.get('phone')
+        password = self.POST.get('password')
         if phone is None or password is None or password == '' or phone == '':
             logging.error('请输入手机号和密码')
             Response = {
