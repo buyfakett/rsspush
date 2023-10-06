@@ -24,7 +24,7 @@ class UserView(APIView):
             'code': openapi.Schema(type=openapi.TYPE_INTEGER, description='code'),
             'message': openapi.Schema(type=openapi.TYPE_STRING, description='message'),
             'data': openapi.Schema(type=openapi.TYPE_OBJECT, description='data', properties={
-                'id': openapi.Schema(type=openapi.TYPE_INTEGER, description='id'),
+                'user_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='id'),
                 'username': openapi.Schema(type=openapi.TYPE_STRING, description='昵称'),
                 'phone': openapi.Schema(type=openapi.TYPE_STRING, description='手机号'),
                 'token': openapi.Schema(type=openapi.TYPE_STRING, description='token'),
@@ -83,7 +83,7 @@ class UserView(APIView):
                             "code": 0,
                             "message": "注册成功",
                             "data": {
-                                "id": data.id,
+                                "user_id": data.id,
                                 "username": data.username,
                                 "phone": str(data.phone.replace(phone[3:7], '****')),
                                 "token": str(data.token)
@@ -130,7 +130,7 @@ class UserView(APIView):
                         "code": 0,
                         "message": "登录成功",
                         "data": {
-                            "id": data.id,
+                            "user_id": data.id,
                             "username": data.username,
                             "phone": str(data.phone.replace(phone[3:7], '****')),
                             "token": str(data.token)

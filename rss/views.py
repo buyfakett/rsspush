@@ -68,7 +68,6 @@ class RssView(APIView):
                 "count": paginator.count,
                 "data": data_list
             }
-
         return JsonResponse(Response)
 
     add_rss_request_body = openapi.Schema(
@@ -77,9 +76,9 @@ class RssView(APIView):
         properties={
             'user_id': openapi.Schema(type=openapi.TYPE_STRING, description='用户id'),
             'push_id': openapi.Schema(type=openapi.TYPE_STRING, description='推送表的id'),
-            'rss_uri': openapi.Schema(type=openapi.TYPE_STRING, description='密码'),
-            'detection_time': openapi.Schema(type=openapi.TYPE_STRING, description='密码'),
-            'timestamp': openapi.Schema(type=openapi.TYPE_STRING, description='密码'),
+            'rss_uri': openapi.Schema(type=openapi.TYPE_STRING, description='rss的uri'),
+            'detection_time': openapi.Schema(type=openapi.TYPE_STRING, description='检测的时间(分钟）'),
+            'timestamp': openapi.Schema(type=openapi.TYPE_STRING, description='上次更新的时间戳'),
         })
 
     add_rss_access_response_schema = openapi.Response(
@@ -87,12 +86,6 @@ class RssView(APIView):
         schema=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
             'code': openapi.Schema(type=openapi.TYPE_INTEGER, description='code'),
             'message': openapi.Schema(type=openapi.TYPE_STRING, description='message'),
-            'data': openapi.Schema(type=openapi.TYPE_OBJECT, description='data', properties={
-                'id': openapi.Schema(type=openapi.TYPE_INTEGER, description='id'),
-                'username': openapi.Schema(type=openapi.TYPE_STRING, description='昵称'),
-                'phone': openapi.Schema(type=openapi.TYPE_STRING, description='手机号'),
-                'token': openapi.Schema(type=openapi.TYPE_STRING, description='token'),
-            }),
         })
     )
 
@@ -102,6 +95,19 @@ class RssView(APIView):
     def add_rss(self):
         data = json.loads(self.body.decode('utf-8'))
         token = self.META.get('HTTP_AUTHORIZATION')
+        user_id = data['user_id']
+        push_id = data['push_id']
+        rss_uri = data['rss_uri']
+        detection_time = data['detection_time']
+        timestamp = data['timestamp']
+        Response = json.loads(check_token(token))
+        if Response['code'] == 0:
+            if user_id is None or user_id == '':
+                Response = {
+                    "code": 10006,
+                    "message": "没有传user_id"
+                }
+        return JsonResponse(Response)
 
     @swagger_auto_schema(value='/api/rss/del', method='post', operation_summary='删除rss接口', responses={201: 'None'})
     @csrf_exempt
