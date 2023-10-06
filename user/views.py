@@ -7,6 +7,7 @@ from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework.views import APIView
 import json, jwt, time
+from util.yaml_util import read_yaml
 
 
 class UserView(APIView):
@@ -42,7 +43,7 @@ class UserView(APIView):
         data = json.loads(request.body.decode('utf-8'))
         phone = data['phone']
         password = data['password']
-        if phone is None or password is None:
+        if phone is None or password is None or password == '' or phone == '':
             logging.error('请输入手机号和密码')
             Response = {
                 "code": 10003,
@@ -75,7 +76,7 @@ class UserView(APIView):
                         password = Encry.hexdigest()  # 字符串加密
                         User.objects.create(phone=phone, username=phone, password=password)
                         data = User.objects.get(phone=phone)
-                        data.token = jwt.encode({'id': str(data.id), 'password': password + str(time.time())}, 'rsspush', algorithm='HS256')
+                        data.token = jwt.encode({'id': str(data.id), 'password': password + str(time.time())}, read_yaml('token_private_key', 'config.yaml'), algorithm='HS256')
                         data.save()
                         logging.info('注册成功')
                         Response = {
@@ -97,7 +98,7 @@ class UserView(APIView):
         data = json.loads(request.body.decode('utf-8'))
         phone = data['phone']
         password = data['password']
-        if phone is None or password is None:
+        if phone is None or password is None or password == '' or phone == '':
             logging.error('请输入手机号和密码')
             Response = {
                 "code": 10003,
@@ -122,7 +123,7 @@ class UserView(APIView):
                         "message": "密码错误"
                     }
                 else:
-                    data.token = jwt.encode({'id': str(data.id), 'password': password + str(time.time())}, 'rsspush', algorithm='HS256')
+                    data.token = jwt.encode({'id': str(data.id), 'password': password + str(time.time())}, read_yaml('token_private_key', 'config.yaml'), algorithm='HS256')
                     data.save()
                     logging.info('登录成功')
                     Response = {
