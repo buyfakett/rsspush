@@ -149,12 +149,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    if not test:
-        schedule.every(eval(read_yaml('detection_time'))).seconds.do(main)
-        try:
-            while True:
-                schedule.run_pending()
-                time.sleep(1)
-        except:
-            pass
+    pass
+    # main()
+    # if not test:
+    #     schedule.every(eval(read_yaml('detection_time'))).seconds.do(main)
+    #     try:
+    #         while True:
+    #             schedule.run_pending()
+    #             time.sleep(1)
+    #     except:
+    #         pass

@@ -40,54 +40,61 @@ class UserView(APIView):
     @api_view(['POST'])
     def register(self):
         data = json.loads(self.body.decode('utf-8'))
-        phone = data['phone']
-        password = data['password']
-        if phone is None or password is None or password == '' or phone == '':
-            logging.error('请输入手机号和密码')
+        if data.get('phone') is None or data.get('password') is None:
+            logging.error('参数缺少')
             Response = {
-                "code": 10003,
-                "message": "请输入手机号和密码"
+                "code": 10010,
+                "message": "参数缺少"
             }
         else:
-            if not re.match('^(13|14|15|16|17|18)[0-9]{9}$', str(phone)):
-                logging.error('不是合法手机号码')
+            phone = data['phone']
+            password = data['password']
+            if password == '' or phone == '':
+                logging.error('请输入手机号和密码')
                 Response = {
-                    "code": 10001,
-                    "message": "不是合法手机号码"
+                    "code": 10003,
+                    "message": "请输入手机号和密码"
                 }
             else:
-                if not re.match('^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,16}$', str(password)):
-                    logging.error('以字母开头，长度在6~18之间，只能包含字母、数字和下划线')
+                if not re.match('^(13|14|15|16|17|18)[0-9]{9}$', str(phone)):
+                    logging.error('不是合法手机号码')
                     Response = {
-                        "code": 10004,
-                        "message": "以字母开头，长度在6~18之间，只能包含字母、数字和下划线"
+                        "code": 10001,
+                        "message": "不是合法手机号码"
                     }
                 else:
-                    if (User.objects.filter(phone=phone)).count():
+                    if not re.match('^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,16}$', str(password)):
+                        logging.error('以字母开头，长度在6~18之间，只能包含字母、数字和下划线')
                         Response = {
-                            "code": 10002,
-                            "message": "该手机号已被注册"
+                            "code": 10004,
+                            "message": "以字母开头，长度在6~18之间，只能包含字母、数字和下划线"
                         }
-                        logging.error('该手机号已被注册')
                     else:
-                        Encry = hashlib.md5()  # 实例化md5
-                        Encry.update(password.encode('utf-8'))  # 字符串字节加密
-                        password = Encry.hexdigest()  # 字符串加密
-                        User.objects.create(phone=phone, username=phone, password=password)
-                        data = User.objects.get(phone=phone)
-                        data.token = jwt.encode({'id': str(data.id), 'password': password + str(time.time())}, read_yaml('token_private_key', 'config.yaml'), algorithm='HS256')
-                        data.save()
-                        logging.info('注册成功')
-                        Response = {
-                            "code": 0,
-                            "message": "注册成功",
-                            "data": {
-                                "user_id": data.id,
-                                "username": data.username,
-                                "phone": str(data.phone.replace(phone[3:7], '****')),
-                                "token": str(data.token)
+                        if (User.objects.filter(phone=phone)).count():
+                            Response = {
+                                "code": 10002,
+                                "message": "该手机号已被注册"
                             }
-                        }
+                            logging.error('该手机号已被注册')
+                        else:
+                            Encry = hashlib.md5()  # 实例化md5
+                            Encry.update(password.encode('utf-8'))  # 字符串字节加密
+                            password = Encry.hexdigest()  # 字符串加密
+                            User.objects.create(phone=phone, username=phone, password=password)
+                            data = User.objects.get(phone=phone)
+                            data.token = jwt.encode({'id': str(data.id), 'password': password + str(time.time())}, read_yaml('token_private_key', 'config.yaml'), algorithm='HS256')
+                            data.save()
+                            logging.info('注册成功')
+                            Response = {
+                                "code": 0,
+                                "message": "注册成功",
+                                "data": {
+                                    "user_id": data.id,
+                                    "username": data.username,
+                                    "phone": str(data.phone.replace(phone[3:7], '****')),
+                                    "token": str(data.token)
+                                }
+                            }
         return JsonResponse(Response)
 
     @swagger_auto_schema(value='/api/user/login',method='post', operation_summary='登录接口', request_body=request_body, responses={0: access_response_schema, 201: 'None'})
@@ -95,44 +102,51 @@ class UserView(APIView):
     @api_view(['POST'])
     def login(self):
         data = json.loads(self.body.decode('utf-8'))
-        phone = data['phone']
-        password = data['password']
-        if phone is None or password is None or password == '' or phone == '':
-            logging.error('请输入手机号和密码')
+        if data.get('phone') is None or data.get('password') is None:
+            logging.error('参数缺少')
             Response = {
-                "code": 10003,
-                "message": "请输入手机号和密码"
+                "code": 10010,
+                "message": "参数缺少"
             }
         else:
-            if not (User.objects.filter(phone=phone)).count():
-                logging.error('该手机号没有注册')
+            phone = data['phone']
+            password = data['password']
+            if password == '' or phone == '':
+                logging.error('请输入手机号和密码')
                 Response = {
-                    "code": 10005,
-                    "message": "该手机号没有注册"
+                    "code": 10003,
+                    "message": "请输入手机号和密码"
                 }
             else:
-                Encry = hashlib.md5()  # 实例化md5
-                Encry.update(password.encode('utf-8'))  # 字符串字节加密
-                password = Encry.hexdigest()  # 字符串加密
-                data = User.objects.get(phone=phone)
-                if data.password != password:
-                    logging.error('密码错误')
+                if not (User.objects.filter(phone=phone)).count():
+                    logging.error('该手机号没有注册')
                     Response = {
-                        "code": 10006,
-                        "message": "密码错误"
+                        "code": 10005,
+                        "message": "该手机号没有注册"
                     }
                 else:
-                    data.token = jwt.encode({'id': str(data.id), 'password': password + str(time.time())}, read_yaml('token_private_key', 'config.yaml'), algorithm='HS256')
-                    data.save()
-                    logging.info('登录成功')
-                    Response = {
-                        "code": 0,
-                        "message": "登录成功",
-                        "data": {
-                            "user_id": data.id,
-                            "username": data.username,
-                            "phone": str(data.phone.replace(phone[3:7], '****')),
-                            "token": str(data.token)
+                    Encry = hashlib.md5()  # 实例化md5
+                    Encry.update(password.encode('utf-8'))  # 字符串字节加密
+                    password = Encry.hexdigest()  # 字符串加密
+                    data = User.objects.get(phone=phone)
+                    if data.password != password:
+                        logging.error('密码错误')
+                        Response = {
+                            "code": 10006,
+                            "message": "密码错误"
                         }
-                    }
+                    else:
+                        data.token = jwt.encode({'id': str(data.id), 'password': password + str(time.time())}, read_yaml('token_private_key', 'config.yaml'), algorithm='HS256')
+                        data.save()
+                        logging.info('登录成功')
+                        Response = {
+                            "code": 0,
+                            "message": "登录成功",
+                            "data": {
+                                "user_id": data.id,
+                                "username": data.username,
+                                "phone": str(data.phone.replace(phone[3:7], '****')),
+                                "token": str(data.token)
+                            }
+                        }
         return JsonResponse(Response)
