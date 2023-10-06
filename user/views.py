@@ -39,8 +39,8 @@ class UserView(APIView):
     @swagger_auto_schema(value='/api/user/register', method='post', operation_summary='注册接口', request_body=request_body, responses={0: access_response_schema, 201: 'None'})
     @csrf_exempt
     @api_view(['POST'])
-    def register(request):
-        data = json.loads(request.body.decode('utf-8'))
+    def register(self):
+        data = json.loads(self.body.decode('utf-8'))
         phone = data['phone']
         password = data['password']
         if phone is None or password is None or password == '' or phone == '':
@@ -94,8 +94,8 @@ class UserView(APIView):
     @swagger_auto_schema(value='/api/user/login',method='post', operation_summary='登录接口', request_body=request_body, responses={0: access_response_schema, 201: 'None'})
     @csrf_exempt
     @api_view(['POST'])
-    def login(request):
-        data = json.loads(request.body.decode('utf-8'))
+    def login(self):
+        data = json.loads(self.body.decode('utf-8'))
         phone = data['phone']
         password = data['password']
         if phone is None or password is None or password == '' or phone == '':

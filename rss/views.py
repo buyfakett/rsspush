@@ -14,12 +14,12 @@ from util.token_util import check_token
 
 
 class RssView(APIView):
-    query_param = [
+    rss_list_query_param = [
         openapi.Parameter('page', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description="页数"),
         openapi.Parameter('pageSize', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description="每页显示的条数"),
     ]
 
-    access_response_schema = openapi.Response(
+    rss_list_access_response_schema = openapi.Response(
         description='Successful response',
         schema=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
             'code': openapi.Schema(type=openapi.TYPE_INTEGER, description='code'),
@@ -37,16 +37,17 @@ class RssView(APIView):
 
     def __init__(self, **kwargs):
         super().__init__(kwargs)
+        self.body = None
         self.GET = None
         self.META = None
 
-    @swagger_auto_schema(value='/api/rss/list', method='get', operation_summary='rss列表接口', manual_parameters=query_param, responses={0: access_response_schema, 201: 'None'})
+    @swagger_auto_schema(value='/api/rss/list', method='get', operation_summary='rss列表接口', manual_parameters=rss_list_query_param, responses={0: rss_list_access_response_schema, 201: 'None'})
     @csrf_exempt
     @api_view(['GET'])
-    def rss_list(request):
-        token = request.META.get('HTTP_AUTHORIZATION')
-        page = request.GET.get('page', 1)
-        pageSize = request.GET.get('pageSize', 20)
+    def rss_list(self):
+        token = self.META.get('HTTP_AUTHORIZATION')
+        page = self.GET.get('page', 1)
+        pageSize = self.GET.get('pageSize', 20)
         if page == '':
             page = 1
         if pageSize == '':
@@ -70,15 +71,41 @@ class RssView(APIView):
 
         return JsonResponse(Response)
 
-    @swagger_auto_schema(value='/api/rss/add', method='post', operation_summary='添加rss接口', responses={201: 'None'})
+    add_rss_request_body = openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['phone', 'password'],
+        properties={
+            'user_id': openapi.Schema(type=openapi.TYPE_STRING, description='用户id'),
+            'push_id': openapi.Schema(type=openapi.TYPE_STRING, description='推送表的id'),
+            'rss_uri': openapi.Schema(type=openapi.TYPE_STRING, description='密码'),
+            'detection_time': openapi.Schema(type=openapi.TYPE_STRING, description='密码'),
+            'timestamp': openapi.Schema(type=openapi.TYPE_STRING, description='密码'),
+        })
+
+    add_rss_access_response_schema = openapi.Response(
+        description='Successful response',
+        schema=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
+            'code': openapi.Schema(type=openapi.TYPE_INTEGER, description='code'),
+            'message': openapi.Schema(type=openapi.TYPE_STRING, description='message'),
+            'data': openapi.Schema(type=openapi.TYPE_OBJECT, description='data', properties={
+                'id': openapi.Schema(type=openapi.TYPE_INTEGER, description='id'),
+                'username': openapi.Schema(type=openapi.TYPE_STRING, description='昵称'),
+                'phone': openapi.Schema(type=openapi.TYPE_STRING, description='手机号'),
+                'token': openapi.Schema(type=openapi.TYPE_STRING, description='token'),
+            }),
+        })
+    )
+
+    @swagger_auto_schema(value='/api/rss/add', method='post', operation_summary='添加rss接口', request_body=add_rss_request_body, responses={0: add_rss_access_response_schema, 201: 'None'})
     @csrf_exempt
     @api_view(['POST'])
-    def add_rss(request):
-        pass
+    def add_rss(self):
+        data = json.loads(self.body.decode('utf-8'))
+        token = self.META.get('HTTP_AUTHORIZATION')
 
     @swagger_auto_schema(value='/api/rss/del', method='post', operation_summary='删除rss接口', responses={201: 'None'})
     @csrf_exempt
     @api_view(['POST'])
-    def delete_rss(request):
+    def delete_rss(self):
         pass
 
