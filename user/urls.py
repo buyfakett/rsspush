@@ -19,4 +19,5 @@ from django.urls import path
 urlpatterns = [
     path('register', user.views.UserView.register),
     path('login', user.views.UserView.login),
+    path('reset', user.views.UserView.change_password),
 ]

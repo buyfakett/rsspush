@@ -7,6 +7,7 @@ from drf_yasg2.utils import swagger_auto_schema
 from rest_framework.views import APIView
 import json, jwt, time, re, logging, hashlib
 from util.yaml_util import read_yaml
+from util.token_util import check_token
 
 
 class UserView(APIView):
@@ -33,6 +34,7 @@ class UserView(APIView):
 
     def __init__(self, **kwargs):
         super().__init__(kwargs)
+        self.META = None
         self.body = None
 
     @swagger_auto_schema(value='/api/user/register', method='post', operation_summary='注册接口', request_body=request_body, responses={0: access_response_schema, 201: 'None'})
@@ -149,4 +151,75 @@ class UserView(APIView):
                                 "token": str(data.token)
                             }
                         }
+        return JsonResponse(Response)
+
+    change_password_request_body = openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['user_id', 'old_password', 'password'],
+        properties={
+            'user_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='user_id'),
+            'old_password': openapi.Schema(type=openapi.TYPE_STRING, description='旧密码'),
+            'password': openapi.Schema(type=openapi.TYPE_STRING, description='密码')
+        })
+
+    @swagger_auto_schema(value='/api/user/reset', method='post', operation_summary='修改密码接口', request_body=change_password_request_body, responses={0: access_response_schema, 201: 'None'})
+    @csrf_exempt
+    @api_view(['POST'])
+    def change_password(self):
+        data = json.loads(self.body.decode('utf-8'))
+        if data.get('user_id') is None or data.get('old_password') is None or data.get('password') is None:
+            logging.error('参数缺少')
+            Response = {
+                "code": 10010,
+                "message": "参数缺少"
+            }
+        else:
+            user_id = data['user_id']
+            old_password = data['old_password']
+            password = data['password']
+            token = self.META.get('HTTP_AUTHORIZATION')
+            Response = json.loads(check_token(token))
+            if Response['code'] == 0:
+                if old_password == '' or user_id == '' or password == '':
+                    logging.error('参数缺少')
+                    Response = {
+                        "code": 10010,
+                        "message": "参数缺少"
+                    }
+                else:
+                    if not User.objects.get(id=user_id).token == token:
+                        logging.error('别用别人的token')
+                        Response = {
+                            "code": 10008,
+                            "message": "别用别人的token"
+                        }
+                    else:
+                        Encry_old_password = hashlib.md5()  # 实例化md5
+                        Encry_old_password.update(old_password.encode('utf-8'))  # 字符串字节加密
+                        old_password = Encry_old_password.hexdigest()  # 字符串加密
+                        Encry_password = hashlib.md5()  # 实例化md5
+                        Encry_password.update(password.encode('utf-8'))  # 字符串字节加密
+                        password = Encry_password.hexdigest()  # 字符串加密
+                        data = User.objects.get(id=user_id)
+                        if data.password != old_password:
+                            logging.error('旧密码错误')
+                            Response = {
+                                "code": 10014,
+                                "message": "旧密码错误"
+                            }
+                        else:
+                            data.password = password
+                            data.token = jwt.encode({'id': str(data.id), 'password': password + str(time.time())}, read_yaml('token_private_key', 'config.yaml'), algorithm='HS256')
+                            data.save()
+                            logging.info('修改密码成功')
+                            Response = {
+                                "code": 0,
+                                "message": "修改密码成功",
+                                "data": {
+                                    "user_id": data.id,
+                                    "username": data.username,
+                                    "phone": str(data.phone.replace(data.phone[3:7], '****')),
+                                    "token": str(data.token)
+                                }
+                            }
         return JsonResponse(Response)
