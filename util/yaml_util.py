@@ -4,6 +4,11 @@ import yaml
 
 # 读取yaml
 def read_yaml(key, filename):
+    """
+    :param key:     string      要读取的值的名称
+    :param filename: string     配置文件的名字
+    :return         *           要读取的值
+    """
     with open(os.getcwd() + '/config/' + filename, encoding="utf-8") as f:
         value = yaml.load(stream=f, Loader=yaml.FullLoader)
         return value[key]

@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 import json, jwt, time, re, logging, hashlib
 from util.yaml_util import read_yaml
 from util.token_util import check_token
+from util.creat_token_util import create_token
 
 
 class UserView(APIView):
@@ -84,8 +85,8 @@ class UserView(APIView):
                             password = Encry.hexdigest()  # 字符串加密
                             User.objects.create(phone=phone, username=phone, password=password)
                             data = User.objects.get(phone=phone)
-                            data.token = jwt.encode({'id': str(data.id), 'password': password + str(time.time())}, read_yaml('token_private_key', 'config.yaml'), algorithm='HS256')
                             data.save()
+                            data.token = create_token(user_id=User.objects.get(phone=phone).id)
                             logging.info('注册成功')
                             Response = {
                                 "code": 0,
@@ -138,7 +139,7 @@ class UserView(APIView):
                             "message": "密码错误"
                         }
                     else:
-                        data.token = jwt.encode({'id': str(data.id), 'password': password + str(time.time())}, read_yaml('token_private_key', 'config.yaml'), algorithm='HS256')
+                        data.token = create_token(user_id=data.user_id)
                         data.save()
                         logging.info('登录成功')
                         Response = {
@@ -209,7 +210,7 @@ class UserView(APIView):
                             }
                         else:
                             data.password = password
-                            data.token = jwt.encode({'id': str(data.id), 'password': password + str(time.time())}, read_yaml('token_private_key', 'config.yaml'), algorithm='HS256')
+                            data.token = create_token(user_id=data.user_id)
                             data.save()
                             logging.info('修改密码成功')
                             Response = {
