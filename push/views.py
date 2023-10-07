@@ -3,11 +3,26 @@ from rest_framework.decorators import api_view
 from django.views.decorators.csrf import csrf_exempt
 from drf_yasg2.utils import swagger_auto_schema
 from drf_yasg2 import openapi
-import json, logging
+import json, logging, requests, schedule, time
 from django.http import JsonResponse
 from .models import Push
 from rss.models import Rss
 from user.auth2 import JWTAuthentication
+from util.yaml_util import read_yaml
+
+def push():
+    test_data = {
+        "msgtype": "link",
+        "link": {
+            "text": "test",
+            "title": "test",
+            "picUrl": "",
+            "messageUrl": "test"
+        }
+    }
+    access_token = '259950604a4a7707f28586b41507f301bcfd41bcaf0c86c04e304f0cc80cfd27'
+    test_url = "https://oapi.dingtalk.com/robot/send?access_token=" + access_token
+    response = requests.post(test_url, json=test_data)
 
 
 class RssView(APIView):
@@ -292,12 +307,22 @@ class RssView(APIView):
             'id': openapi.Schema(type=openapi.TYPE_INTEGER, description='id'),
         })
 
-    @swagger_auto_schema(value='/api/push/refresh', method='post', operation_summary='刷新推送接口', request_body=refresh_push_request_body, responses={0: base_access_response_schema, 201: 'None'})
+    @swagger_auto_schema(value='/api/push/refresh', method='post', operation_summary='刷新推送接口', responses={0: base_access_response_schema, 201: 'None'})
     @csrf_exempt
     @api_view(['POST'])
     def refresh_push(self):
+        rss_all = Rss.objects.all()
+        rss_hub_service = read_yaml('rss_hub_service', 'config.yaml')
+        schedule.every(5).seconds.do(push)
+        try:
+            while True:
+                schedule.run_pending()
+                time.sleep(1)
+        except:
+            pass
         Response = {
             "code": 0,
             "message": "没写",
         }
         return JsonResponse(Response)
+

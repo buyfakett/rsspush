@@ -22,6 +22,7 @@ class JWTAuthentication(BaseAuthentication):
             '/api/docs/?format=openapi',
             '/api/user/register',
             '/api/user/login',
+            '/api/push/refresh',
         ]
         # 判断url在不在白名单中
         if url not in white_list:
