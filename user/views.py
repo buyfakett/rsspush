@@ -5,13 +5,13 @@ from .models import User
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework.views import APIView
-import json, jwt, time, re, logging, hashlib
-from util.yaml_util import read_yaml
-from util.token_util import check_token
-from util.creat_token_util import create_token
+import json, re, logging, hashlib
+from user.auth import create_token
+from user.auth2 import JWTAuthentication
 
 
 class UserView(APIView):
+    authentication_classes = [JWTAuthentication, ]
     request_body = openapi.Schema(
         type=openapi.TYPE_OBJECT,
         required=['phone', 'password'],
@@ -35,6 +35,7 @@ class UserView(APIView):
 
     def __init__(self, **kwargs):
         super().__init__(kwargs)
+        self.user = None
         self.META = None
         self.body = None
 
@@ -139,7 +140,7 @@ class UserView(APIView):
                             "message": "密码错误"
                         }
                     else:
-                        data.token = create_token(user_id=data.user_id)
+                        data.token = create_token(user_id=data.id)
                         data.save()
                         logging.info('登录成功')
                         Response = {
@@ -156,9 +157,8 @@ class UserView(APIView):
 
     change_password_request_body = openapi.Schema(
         type=openapi.TYPE_OBJECT,
-        required=['user_id', 'old_password', 'password'],
+        required=['old_password', 'password'],
         properties={
-            'user_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='user_id'),
             'old_password': openapi.Schema(type=openapi.TYPE_STRING, description='旧密码'),
             'password': openapi.Schema(type=openapi.TYPE_STRING, description='密码')
         })
@@ -168,59 +168,50 @@ class UserView(APIView):
     @api_view(['POST'])
     def change_password(self):
         data = json.loads(self.body.decode('utf-8'))
-        if data.get('user_id') is None or data.get('old_password') is None or data.get('password') is None:
+        if data.get('old_password') is None or data.get('password') is None:
             logging.error('参数缺少')
             Response = {
                 "code": 10010,
                 "message": "参数缺少"
             }
         else:
-            user_id = data['user_id']
             old_password = data['old_password']
             password = data['password']
             token = self.META.get('HTTP_AUTHORIZATION')
             Response = json.loads(check_token(token))
             if Response['code'] == 0:
-                if old_password == '' or user_id == '' or password == '':
+                if old_password == '' or password == '':
                     logging.error('参数缺少')
                     Response = {
                         "code": 10010,
                         "message": "参数缺少"
                     }
                 else:
-                    if not User.objects.get(id=user_id).token == token:
-                        logging.error('别用别人的token')
+                    Encry_old_password = hashlib.md5()  # 实例化md5
+                    Encry_old_password.update(old_password.encode('utf-8'))  # 字符串字节加密
+                    old_password = Encry_old_password.hexdigest()  # 字符串加密
+                    Encry_password = hashlib.md5()  # 实例化md5
+                    Encry_password.update(password.encode('utf-8'))  # 字符串字节加密
+                    password = Encry_password.hexdigest()  # 字符串加密
+                    if self.user.password != old_password:
+                        logging.error('旧密码错误')
                         Response = {
-                            "code": 10008,
-                            "message": "别用别人的token"
+                            "code": 10014,
+                            "message": "旧密码错误"
                         }
                     else:
-                        Encry_old_password = hashlib.md5()  # 实例化md5
-                        Encry_old_password.update(old_password.encode('utf-8'))  # 字符串字节加密
-                        old_password = Encry_old_password.hexdigest()  # 字符串加密
-                        Encry_password = hashlib.md5()  # 实例化md5
-                        Encry_password.update(password.encode('utf-8'))  # 字符串字节加密
-                        password = Encry_password.hexdigest()  # 字符串加密
-                        data = User.objects.get(id=user_id)
-                        if data.password != old_password:
-                            logging.error('旧密码错误')
-                            Response = {
-                                "code": 10014,
-                                "message": "旧密码错误"
+                        self.user.password = password
+                        self.user.token = create_token(user_id=self.user.id)
+                        self.user.save()
+                        logging.info('修改密码成功')
+                        Response = {
+                            "code": 0,
+                            "message": "修改密码成功",
+                            "data": {
+                                "user_id": self.user.id,
+                                "username": self.user.username,
+                                "phone": str(self.user.phone.replace(self.user.phone[3:7], '****')),
+                                "token": str(self.user.token)
                             }
-                        else:
-                            data.password = password
-                            data.token = create_token(user_id=data.user_id)
-                            data.save()
-                            logging.info('修改密码成功')
-                            Response = {
-                                "code": 0,
-                                "message": "修改密码成功",
-                                "data": {
-                                    "user_id": data.id,
-                                    "username": data.username,
-                                    "phone": str(data.phone.replace(data.phone[3:7], '****')),
-                                    "token": str(data.token)
-                                }
-                            }
+                        }
         return JsonResponse(Response)
