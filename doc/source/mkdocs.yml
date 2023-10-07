@@ -1,0 +1,25 @@
+site_name: rsspush
+copyright: Powered By buyfakett
+site_author: buyfakett
+site_description: Powered By buyfakett
+repo_url: https://github.com/buyfakett/rsspush
+nav:
+  - index: 'README.md'
+theme:
+  name: material
+  language: zh
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+  - scheme: default
+    toggle:
+     icon: material/weather-sunny
+     name: Switch to dark mode
+    primary: light blue
+  - scheme: slate
+    toggle:
+       icon: material/weather-night
+       name: Switch to light mode
+    primary: light blue
+  plugins:
+    - offline
