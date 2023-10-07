@@ -19,7 +19,6 @@ from django.contrib import admin
 from rest_framework import permissions
 from drf_yasg2.views import get_schema_view
 from drf_yasg2 import openapi
-import user.views
 
 schema_view = get_schema_view(
     openapi.Info(

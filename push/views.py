@@ -287,7 +287,7 @@ class RssView(APIView):
 
     refresh_push_request_body = openapi.Schema(
         type=openapi.TYPE_OBJECT,
-        required=['id', 'push_type', 'ding_access_token', 'ding_keyword', 'wechat_template_id', 'wechat_app_id', 'wechat_to_user_ids'],
+        required=['id'],
         properties={
             'id': openapi.Schema(type=openapi.TYPE_INTEGER, description='id'),
         })
