@@ -6,6 +6,17 @@ from util.yaml_util import read_yaml
 from .models import User
 
 
+# 定义一个白名单 注册登录接口 随便访问
+white_list = [
+    '/api/docs/',
+    '/admin/',
+    '/api/docs/?format=openapi',
+    '/api/user/register',
+    '/api/user/login',
+    '/api/push/refresh',
+]
+
+
 class JWTAuthentication(BaseAuthentication):
     def authenticate(self, request):
         # 密钥，必须跟签发token的一样
@@ -15,15 +26,6 @@ class JWTAuthentication(BaseAuthentication):
         token = request.META.get('HTTP_AUTHORIZATION')
         # 获取url
         url = request.get_full_path()
-        # 定义一个白名单 注册登录接口 随便访问
-        white_list = [
-            '/api/docs/',
-            '/admin/',
-            '/api/docs/?format=openapi',
-            '/api/user/register',
-            '/api/user/login',
-            '/api/push/refresh',
-        ]
         # 判断url在不在白名单中
         if url not in white_list:
             if not token:
