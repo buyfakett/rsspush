@@ -86,8 +86,8 @@ class UserView(APIView):
                             password = Encry.hexdigest()  # 字符串加密
                             User.objects.create(phone=phone, username=phone, password=password)
                             data = User.objects.get(phone=phone)
-                            data.save()
                             data.token = create_token(user_id=User.objects.get(phone=phone).id)
+                            data.save()
                             logging.info('注册成功')
                             Response = {
                                 "code": 0,
