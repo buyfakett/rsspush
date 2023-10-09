@@ -92,12 +92,12 @@ WSGI_APPLICATION = 'rsspush.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': read_yaml('DB_NAME', 'db.yaml'),
-        'USER': read_yaml('DB_USER', 'db.yaml'),
-        'PASSWORD': read_yaml('DB_PASSWORD', 'db.yaml'),
-        'HOST': read_yaml('DB_HOST', 'db.yaml'),
-        'PORT': str(read_yaml('DB_PORT', 'db.yaml')),
+        'ENGINE': read_yaml('ENGINE', 'config.yaml'),
+        'NAME': read_yaml('DB_NAME', 'config.yaml'),
+        'USER': read_yaml('DB_USER', 'config.yaml'),
+        'PASSWORD': read_yaml('DB_PASSWORD', 'config.yaml'),
+        'HOST': read_yaml('DB_HOST', 'config.yaml'),
+        'PORT': str(read_yaml('DB_PORT', 'config.yaml')),
     }
 }
 
