@@ -1,5 +1,4 @@
-import os
-import yaml
+import os, yaml, logging
 
 
 # 读取yaml
@@ -9,9 +8,13 @@ def read_yaml(key, filename):
     :param filename: string     配置文件的名字
     :return         *           要读取的值
     """
-    with open(os.getcwd() + '/config/' + filename, encoding="utf-8") as f:
-        value = yaml.load(stream=f, Loader=yaml.FullLoader)
-        return value[key]
+    try:
+        with open(os.getcwd() + '/config/' + filename, encoding="utf-8") as f:
+            value = yaml.load(stream=f, Loader=yaml.FullLoader)
+            return value[key]
+    except:
+        logging.error("读取配置文件的时候异常，请检查配置文件！！！")
+        raise SystemExit(0)
 
 
 # 追加写入yaml
