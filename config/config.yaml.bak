@@ -1,11 +1,1 @@
-# 数据库
-ENGINE: django.db.backends.postgresql
-DB_NAME:
-DB_USER:
-DB_PASSWORD:
-DB_HOST:
-DB_PORT:
-# token秘钥
 token_private_key: j8mR75f473yNJz5yJg2GvmXKcXk3bx
-# rsshub部署的地址
-rss_hub_service: http://
