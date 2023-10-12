@@ -8,6 +8,8 @@ from rest_framework.views import APIView
 import json, re, logging, hashlib
 from user.auth import create_token
 from user.auth2 import JWTAuthentication
+from rsspush.error_response import error_response
+from rsspush.success_response import success_response
 
 
 class UserView(APIView):
@@ -45,41 +47,26 @@ class UserView(APIView):
     def register(self):
         data = json.loads(self.body.decode('utf-8'))
         if data.get('phone') is None or data.get('password') is None:
-            logging.error('参数缺少')
-            Response = {
-                "code": 10010,
-                "message": "参数缺少"
-            }
+            logging.error(error_response.missing_parameter.value['message'])
+            return JsonResponse(error_response.missing_parameter.value)
         else:
             phone = data['phone']
             password = data['password']
             if password == '' or phone == '':
-                logging.error('请输入手机号和密码')
-                Response = {
-                    "code": 10003,
-                    "message": "请输入手机号和密码"
-                }
+                logging.error(error_response.missing_parameter.value['message'])
+                return JsonResponse(error_response.missing_parameter.value)
             else:
                 if not re.match('^(13|14|15|16|17|18)[0-9]{9}$', str(phone)):
-                    logging.error('不是合法手机号码')
-                    Response = {
-                        "code": 10001,
-                        "message": "不是合法手机号码"
-                    }
+                    logging.error(error_response.phone_error.value['message'])
+                    return JsonResponse(error_response.phone_error.value)
                 else:
                     if not re.match('^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,16}$', str(password)):
-                        logging.error('以字母开头，长度在6~18之间，只能包含字母、数字和下划线')
-                        Response = {
-                            "code": 10004,
-                            "message": "以字母开头，长度在6~18之间，只能包含字母、数字和下划线"
-                        }
+                        logging.error(error_response.password_format_error.value['message'])
+                        return JsonResponse(error_response.password_format_error.value)
                     else:
                         if (User.objects.filter(phone=phone)).count():
-                            Response = {
-                                "code": 10002,
-                                "message": "该手机号已被注册"
-                            }
-                            logging.error('该手机号已被注册')
+                            logging.error(error_response.phone_repeat_error.value['message'])
+                            return JsonResponse(error_response.phone_repeat_error.value)
                         else:
                             Encry = hashlib.md5()  # 实例化md5
                             Encry.update(password.encode('utf-8'))  # 字符串字节加密
@@ -89,17 +76,13 @@ class UserView(APIView):
                             data.token = create_token(user_id=User.objects.get(phone=phone).id)
                             data.save()
                             logging.info('注册成功')
-                            Response = {
-                                "code": 0,
-                                "message": "注册成功",
-                                "data": {
-                                    "user_id": data.id,
-                                    "username": data.username,
-                                    "phone": str(data.phone.replace(phone[3:7], '****')),
-                                    "token": str(data.token)
-                                }
+                            Response_data = {
+                                "user_id": data.id,
+                                "username": data.username,
+                                "phone": str(data.phone.replace(phone[3:7], '****')),
+                                "token": str(data.token)
                             }
-        return JsonResponse(Response)
+                            return success_response(0, "注册成功", Response_data)
 
     @swagger_auto_schema(value='/api/user/login',method='post', operation_summary='登录接口', request_body=request_body, responses={0: access_response_schema, 201: 'None'})
     @csrf_exempt
@@ -107,53 +90,37 @@ class UserView(APIView):
     def login(self):
         data = json.loads(self.body.decode('utf-8'))
         if data.get('phone') is None or data.get('password') is None:
-            logging.error('参数缺少')
-            Response = {
-                "code": 10010,
-                "message": "参数缺少"
-            }
+            logging.error(error_response.missing_parameter.value['message'])
+            return JsonResponse(error_response.missing_parameter.value)
         else:
             phone = data['phone']
             password = data['password']
             if password == '' or phone == '':
-                logging.error('请输入手机号和密码')
-                Response = {
-                    "code": 10003,
-                    "message": "请输入手机号和密码"
-                }
+                logging.error(error_response.missing_parameter.value['message'])
+                return JsonResponse(error_response.missing_parameter.value)
             else:
                 if not (User.objects.filter(phone=phone)).count():
-                    logging.error('该手机号没有注册')
-                    Response = {
-                        "code": 10005,
-                        "message": "该手机号没有注册"
-                    }
+                    logging.error(error_response.phone_not_found_error.value['message'])
+                    return JsonResponse(error_response.phone_not_found_error.value)
                 else:
                     Encry = hashlib.md5()  # 实例化md5
                     Encry.update(password.encode('utf-8'))  # 字符串字节加密
                     password = Encry.hexdigest()  # 字符串加密
                     data = User.objects.get(phone=phone)
                     if data.password != password:
-                        logging.error('密码错误')
-                        Response = {
-                            "code": 10006,
-                            "message": "密码错误"
-                        }
+                        logging.error(error_response.password_error.value['message'])
+                        return JsonResponse(error_response.password_error.value)
                     else:
                         data.token = create_token(user_id=data.id)
                         data.save()
                         logging.info('登录成功')
-                        Response = {
-                            "code": 0,
-                            "message": "登录成功",
-                            "data": {
+                        Response_data = {
                                 "user_id": data.id,
                                 "username": data.username,
                                 "phone": str(data.phone.replace(phone[3:7], '****')),
                                 "token": str(data.token)
                             }
-                        }
-        return JsonResponse(Response)
+                        return success_response(0, "登录成功", Response_data)
 
     change_password_request_body = openapi.Schema(
         type=openapi.TYPE_OBJECT,
@@ -169,49 +136,33 @@ class UserView(APIView):
     def change_password(self):
         data = json.loads(self.body.decode('utf-8'))
         if data.get('old_password') is None or data.get('password') is None:
-            logging.error('参数缺少')
-            Response = {
-                "code": 10010,
-                "message": "参数缺少"
-            }
+            logging.error(error_response.missing_parameter.value['message'])
+            return JsonResponse(error_response.missing_parameter.value)
         else:
             old_password = data['old_password']
             password = data['password']
-            token = self.META.get('HTTP_AUTHORIZATION')
-            Response = json.loads(check_token(token))
-            if Response['code'] == 0:
-                if old_password == '' or password == '':
-                    logging.error('参数缺少')
-                    Response = {
-                        "code": 10010,
-                        "message": "参数缺少"
-                    }
+            if old_password == '' or password == '':
+                logging.error(error_response.missing_parameter.value['message'])
+                return JsonResponse(error_response.missing_parameter.value)
+            else:
+                Encry_old_password = hashlib.md5()  # 实例化md5
+                Encry_old_password.update(old_password.encode('utf-8'))  # 字符串字节加密
+                old_password = Encry_old_password.hexdigest()  # 字符串加密
+                Encry_password = hashlib.md5()  # 实例化md5
+                Encry_password.update(password.encode('utf-8'))  # 字符串字节加密
+                password = Encry_password.hexdigest()  # 字符串加密
+                if self.user.password != old_password:
+                    logging.error(error_response.old_password_error.value['message'])
+                    return JsonResponse(error_response.old_password_error.value)
                 else:
-                    Encry_old_password = hashlib.md5()  # 实例化md5
-                    Encry_old_password.update(old_password.encode('utf-8'))  # 字符串字节加密
-                    old_password = Encry_old_password.hexdigest()  # 字符串加密
-                    Encry_password = hashlib.md5()  # 实例化md5
-                    Encry_password.update(password.encode('utf-8'))  # 字符串字节加密
-                    password = Encry_password.hexdigest()  # 字符串加密
-                    if self.user.password != old_password:
-                        logging.error('旧密码错误')
-                        Response = {
-                            "code": 10014,
-                            "message": "旧密码错误"
+                    self.user.password = password
+                    self.user.token = create_token(user_id=self.user.id)
+                    self.user.save()
+                    logging.info('修改密码成功')
+                    Response_data = {
+                            "user_id": self.user.id,
+                            "username": self.user.username,
+                            "phone": str(self.user.phone.replace(self.user.phone[3:7], '****')),
+                            "token": str(self.user.token)
                         }
-                    else:
-                        self.user.password = password
-                        self.user.token = create_token(user_id=self.user.id)
-                        self.user.save()
-                        logging.info('修改密码成功')
-                        Response = {
-                            "code": 0,
-                            "message": "修改密码成功",
-                            "data": {
-                                "user_id": self.user.id,
-                                "username": self.user.username,
-                                "phone": str(self.user.phone.replace(self.user.phone[3:7], '****')),
-                                "token": str(self.user.token)
-                            }
-                        }
-        return JsonResponse(Response)
+                    return success_response(0, "修改密码成功", Response_data)

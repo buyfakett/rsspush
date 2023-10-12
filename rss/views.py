@@ -10,6 +10,7 @@ from .models import Rss
 from push.models import Push
 from django.forms import model_to_dict
 from user.auth2 import JWTAuthentication
+from rsspush.error_response import error_response
 
 
 class RssView(APIView):
@@ -90,19 +91,13 @@ class RssView(APIView):
     def add_rss(self):
         data = json.loads(self.body.decode('utf-8'))
         if data.get('rss_uri') is None:
-            logging.error('参数缺少')
-            Response = {
-                "code": 10010,
-                "message": "参数缺少"
-            }
+            logging.error(error_response.missing_parameter.value['message'])
+            return JsonResponse(error_response.missing_parameter.value)
         else:
             rss_uri = data['rss_uri']
             if rss_uri == '':
-                logging.error('参数缺少')
-                Response = {
-                    "code": 10010,
-                    "message": "参数缺少"
-                }
+                logging.error(error_response.missing_parameter.value['message'])
+                return JsonResponse(error_response.missing_parameter.value)
             else:
                 if Rss.objects.create(user_id=self.user.id, rss_uri=rss_uri):
                     logging.info('用户' + str(self.user.id) + '已新增rss')
@@ -111,11 +106,8 @@ class RssView(APIView):
                         "message": "新增成功"
                     }
                 else:
-                    logging.error('新增rss失败')
-                    Response = {
-                        "code": 10011,
-                        "message": "新增rss失败"
-                    }
+                    logging.error(error_response.add_rss_error.value['message'])
+                    return JsonResponse(error_response.add_rss_error.value)
         return JsonResponse(Response)
 
     edit_rss_request_body = openapi.Schema(
@@ -140,27 +132,18 @@ class RssView(APIView):
     def edit_rss(self):
         data = json.loads(self.body.decode('utf-8'))
         if data.get('rss_uri') is None or data.get('id') is None:
-            logging.error('参数缺少')
-            Response = {
-                "code": 10010,
-                "message": "参数缺少"
-            }
+            logging.error(error_response.missing_parameter.value['message'])
+            return JsonResponse(error_response.missing_parameter.value)
         else:
             rss_uri = data['rss_uri']
             id = data['id']
             if id == '' or rss_uri == '':
-                logging.error('参数缺少')
-                Response = {
-                    "code": 10010,
-                    "message": "参数缺少"
-                }
+                logging.error(error_response.missing_parameter.value['message'])
+                return JsonResponse(error_response.missing_parameter.value)
             else:
                 if not Rss.objects.filter(id=id).count():
-                    logging.error('没有这数据')
-                    Response = {
-                        "code": 10012,
-                        "message": "没有这数据"
-                    }
+                    logging.error(error_response.no_data.value['message'])
+                    return JsonResponse(error_response.no_data.value)
                 else:
                     data = Rss.objects.get(id=id)
                     data.rss_uri = rss_uri
@@ -193,19 +176,13 @@ class RssView(APIView):
     def delete_rss(self):
         data = json.loads(self.body.decode('utf-8'))
         if data.get('id') is None:
-            logging.error('参数缺少')
-            Response = {
-                "code": 10010,
-                "message": "参数缺少"
-            }
+            logging.error(error_response.missing_parameter.value['message'])
+            return JsonResponse(error_response.missing_parameter.value)
         else:
             id = data['id']
             if id is None or id == '':
-                logging.error('没有传id')
-                Response = {
-                    "code": 10007,
-                    "message": "没有传id"
-                }
+                logging.error(error_response.missing_parameter.value['message'])
+                return JsonResponse(error_response.missing_parameter.value)
             else:
                 push_id = Rss.objects.get(id=id).push_id
                 if push_id is not None:
@@ -219,10 +196,7 @@ class RssView(APIView):
                             "message": "删除成功"
                         }
                     else:
-                        logging.error('删除失败')
-                        Response = {
-                            "code": 10009,
-                            "message": "删除失败"
-                        }
+                        logging.error(error_response.delete_error.value['message'])
+                        return JsonResponse(error_response.delete_error.value)
         return JsonResponse(Response)
 

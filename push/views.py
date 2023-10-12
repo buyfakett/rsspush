@@ -9,6 +9,9 @@ from .models import Push
 from rss.models import Rss
 from user.auth2 import JWTAuthentication
 from util.yaml_util import read_yaml
+from rsspush.error_response import error_response
+from rsspush.success_response import success_response
+
 
 def push():
     test_data = {
@@ -27,6 +30,7 @@ def push():
 
 class RssView(APIView):
     authentication_classes = [JWTAuthentication, ]
+
     def __init__(self, **kwargs):
         super().__init__(kwargs)
         self.user = None
@@ -61,29 +65,20 @@ class RssView(APIView):
     def add_push(self):
         data = json.loads(self.body.decode('utf-8'))
         if data.get('push_type') is None or data.get('rss_id') is None:
-            logging.error('参数缺少')
-            Response = {
-                "code": 10010,
-                "message": "参数缺少"
-            }
+            logging.error(error_response.missing_parameter.value['message'])
+            return JsonResponse(error_response.missing_parameter.value)
         else:
             rss_id = data['rss_id']
             push_type = data['push_type']
             rss_push_id = Rss.objects.get(id=rss_id).push_id
             if not rss_push_id is None or rss_push_id == '':
-                logging.error('此rss已有push数据，应该调修改接口')
-                Response = {
-                    "code": 10013,
-                    "message": "此rss已有push数据，应该调修改接口"
-                }
+                logging.error(error_response.push_full_error_parameter.value['message'])
+                return JsonResponse(error_response.push_full_error_parameter.value)
             else:
                 if push_type == 'ding':
                     if data.get('ding_access_token') is None or data.get('ding_keyword') is None:
-                        logging.error('参数缺少')
-                        Response = {
-                            "code": 10010,
-                            "message": "参数缺少"
-                        }
+                        logging.error(error_response.missing_parameter.value['message'])
+                        return JsonResponse(error_response.missing_parameter.value)
                     else:
                         ding_access_token = data['ding_access_token']
                         ding_keyword = data['ding_keyword']
@@ -98,11 +93,8 @@ class RssView(APIView):
                         }
                 elif push_type == 'wechat':
                     if data.get('wechat_template_id') is None or data.get('wechat_app_id') is None or data.get('wechat_to_user_ids') is None:
-                        logging.error('参数缺少')
-                        Response = {
-                            "code": 10010,
-                            "message": "参数缺少"
-                        }
+                        logging.error(error_response.missing_parameter.value['message'])
+                        return JsonResponse(error_response.missing_parameter.value)
                     else:
                         wechat_template_id = data['wechat_template_id']
                         wechat_app_id = data['wechat_app_id']
@@ -117,11 +109,8 @@ class RssView(APIView):
                             "message": "新增成功"
                         }
                 else:
-                    logging.error('没有这个推送选项')
-                    Response = {
-                        "code": 10012,
-                        "message": "没有这个推送选项"
-                    }
+                    logging.error(error_response.push_error_parameter.value['message'])
+                    return JsonResponse(error_response.push_error_parameter.value)
         return JsonResponse(Response)
 
     edit_push_request_body = openapi.Schema(
@@ -143,21 +132,15 @@ class RssView(APIView):
     def edit_push(self):
         data = json.loads(self.body.decode('utf-8'))
         if data.get('push_type') is None or data.get('id') is None:
-            logging.error('参数缺少')
-            Response = {
-                "code": 10010,
-                "message": "参数缺少"
-            }
+            logging.error(error_response.missing_parameter.value['message'])
+            return JsonResponse(error_response.missing_parameter.value)
         else:
             id = data['id']
             push_type = data['push_type']
             if push_type == 'ding':
                 if data.get('ding_access_token') is None or data.get('ding_keyword') is None:
-                    logging.error('参数缺少')
-                    Response = {
-                        "code": 10010,
-                        "message": "参数缺少"
-                    }
+                    logging.error(error_response.missing_parameter.value['message'])
+                    return JsonResponse(error_response.missing_parameter.value)
                 else:
                     ding_access_token = data['ding_access_token']
                     ding_keyword = data['ding_keyword']
@@ -172,11 +155,8 @@ class RssView(APIView):
                     }
             elif push_type == 'wechat':
                 if data.get('wechat_template_id') is None or data.get('wechat_app_id') is None or data.get('wechat_to_user_ids') is None:
-                    logging.error('参数缺少')
-                    Response = {
-                        "code": 10010,
-                        "message": "参数缺少"
-                    }
+                    logging.error(error_response.missing_parameter.value['message'])
+                    return JsonResponse(error_response.missing_parameter.value)
                 else:
                     wechat_template_id = data['wechat_template_id']
                     wechat_app_id = data['wechat_app_id']
@@ -192,11 +172,8 @@ class RssView(APIView):
                         "message": "修改成功"
                     }
             else:
-                logging.error('没有这个推送选项')
-                Response = {
-                    "code": 10012,
-                    "message": "没有这个推送选项"
-                }
+                logging.error(error_response.push_error_parameter.value['message'])
+                return JsonResponse(error_response.push_error_parameter.value)
         return JsonResponse(Response)
 
     delete_push_request_body = openapi.Schema(
@@ -212,11 +189,8 @@ class RssView(APIView):
     def delete_push(self):
         data = json.loads(self.body.decode('utf-8'))
         if data.get('rss_id') is None:
-            logging.error('参数缺少')
-            Response = {
-                "code": 10010,
-                "message": "参数缺少"
-            }
+            logging.error(error_response.missing_parameter.value['message'])
+            return JsonResponse(error_response.missing_parameter.value)
         else:
             rss_id = data['rss_id']
             data = Rss.objects.get(id=rss_id)
@@ -230,11 +204,8 @@ class RssView(APIView):
                     "message": "删除成功"
                 }
             else:
-                logging.error('删除失败')
-                Response = {
-                    "code": 10009,
-                    "message": "删除失败"
-                }
+                logging.error(error_response.delete_error.value['message'])
+                return JsonResponse(error_response.delete_error.value)
         return JsonResponse(Response)
 
     push_view_query_param = [
@@ -271,20 +242,13 @@ class RssView(APIView):
         }
         rss_id = self.GET.get('rss_id')
         if rss_id is None or rss_id == '':
-            logging.error('参数缺少')
-            Response = {
-                "code": 10010,
-                "message": "参数缺少"
-            }
+            logging.error(error_response.missing_parameter.value['message'])
+            return JsonResponse(error_response.missing_parameter.value)
         else:
             rss_push_id = Rss.objects.get(id=rss_id).push_id
             if rss_push_id is None or rss_push_id == '':
                 logging.info('用户' + str(self.user.id) + 'push' + str(rss_push_id) + '无推送配置')
-                Response = {
-                    "code": 0,
-                    "message": "无推送配置",
-                    "data": data
-                }
+                return success_response(0, "无推送配置", data)
             else:
                 push_data = Push.objects.get(id=rss_push_id)
                 data['push_type'] = push_data.push_type
@@ -293,12 +257,7 @@ class RssView(APIView):
                 data['wechat_template_id'] = push_data.wechat_template_id
                 data['wechat_to_user_ids'] = push_data.wechat_to_user_ids
                 logging.info('用户' + str(self.user.id) + 'push' + str(rss_push_id) + '获取成功')
-                Response = {
-                    "code": 0,
-                    "message": "获取成功",
-                    "data": data
-                }
-        return JsonResponse(Response)
+                return success_response(0, "获取成功", data)
 
     refresh_push_request_body = openapi.Schema(
         type=openapi.TYPE_OBJECT,
