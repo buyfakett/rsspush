@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view
 from django.views.decorators.csrf import csrf_exempt
 from drf_yasg2.utils import swagger_auto_schema
 from drf_yasg2 import openapi
-import json, logging, requests, schedule, time
+import json, logging, feedparser, datetime, requests, os, sys, random
 from django.http import JsonResponse
 from .models import Push
 from rss.models import Rss
@@ -11,21 +11,122 @@ from user.auth2 import JWTAuthentication
 from util.yaml_util import read_yaml
 from rsspush.error_response import error_response
 from rsspush.success_response import success_response
+from datetime import datetime as dt
+from apscheduler.schedulers.background import BackgroundScheduler
 
 
-def push():
+def send_ding_message(access_token, keyword, now_time, title, link):
     test_data = {
         "msgtype": "link",
         "link": {
-            "text": "test",
-            "title": "test",
+            "text": title,
+            "title": keyword,
             "picUrl": "",
-            "messageUrl": "test"
+            "messageUrl": link
         }
     }
-    access_token = '259950604a4a7707f28586b41507f301bcfd41bcaf0c86c04e304f0cc80cfd27'
     test_url = "https://oapi.dingtalk.com/robot/send?access_token=" + access_token
     response = requests.post(test_url, json=test_data)
+    if json.loads(response.text)['errcode'] == 0:
+        logging.info(now_time + "推送钉钉：" + json.loads(response.text)['errmsg'])
+    else:
+        logging.error('推送错误')
+
+
+def get_wechat_access_token(app_id, app_secret, now_time):
+    # appId
+    global access_token
+    app_id = app_id
+    # appSecret
+    app_secret = app_secret
+    post_url = ("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={}&secret={}"
+                .format(app_id, app_secret))
+    try:
+        access_token = requests.get(post_url).json()['access_token']
+    except KeyError:
+        logging.error(now_time + '获取access_token失败，请检查app_id和app_secret是否正确')
+        os.system("pause")
+        sys.exit(1)
+    return access_token
+
+
+def get_color():
+    # 往list中填喜欢的颜色即可
+    color_list = ['#6495ED', '#3CB371', "#3B99D4", "#8ED14B", "#F06B49", "#ECC2F1", "#82C7C3", "#E3698A", "#1776EB", "#F5B2AC", "#533085", "#89363A", "#19413E", "#D92B45", "#60C9FF", "#1B9F2E", "#BA217D", "#076B82"]
+    return random.choice(color_list)
+
+
+def send_wechat_message(to_user, now_time, title, detail, url, wx_post_url):
+    data = {
+        "touser": to_user,
+        "template_id": read_yaml('template_id'),
+        "url": url,
+        "topcolor": "#FF0000",
+        "data": {
+            "title_title": {
+                "value": "通知内容：  ",
+                "color": "#a9a9a9"
+            },
+            "title": {
+                "value": title,
+                "color": get_color()
+            },
+            "now_time_title": {
+                "value": "\n通知时间：  ",
+                "color": "#a9a9a9"
+            },
+            "now_time": {
+                "value": now_time,
+                "color": get_color()
+            },
+            "detail_title": {
+                "value": "\n通知内容：  ",
+                "color": "#a9a9a9"
+            },
+            "detail": {
+                "value": detail,
+                "color": get_color()
+            }
+        }
+    }
+    headers = {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+        'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
+    }
+    response = requests.post(wx_post_url, headers=headers, json=data).json()
+    if response["errcode"] == 40037:
+        logging.error(now_time + '推送消息失败，请检查模板id是否正确')
+    elif response["errcode"] == 40036:
+        logging.error(now_time + '推送消息失败，请检查模板id是否为空')
+    elif response["errcode"] == 40003:
+        logging.error(now_time + '推送消息失败，请检查微信号是否正确')
+    elif response["errcode"] == 0:
+        logging.info(now_time + '推送消息成功')
+    else:
+        logging.info(response)
+
+
+def check_rss(timestamp, rss_uri, push_id, id):
+    bili_url = read_yaml('rss_hub_service', 'config.yaml') + rss_uri
+    d = feedparser.parse(bili_url)
+    detail = d['entries'][0]['summary']
+    title = d['entries'][0]['title']
+    link = d['entries'][0]['link']
+    time = d['updated']
+    rss_timestamp = int(dt.strptime(time, '%a, %d %b %Y %H:%M:%S %Z').timestamp())
+    now_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    if timestamp != rss_timestamp:
+        push_data = Push.objects.get(id=push_id)
+        if push_data.push_type == 'ding':
+            send_ding_message(push_data.ding_access_token, push_data.ding_keyword, now_time, title, link)
+        if push_data.push_type == 'wechat':
+            ACCESS_TOKEN = get_wechat_access_token(push_data.app_id, push_data.app_secret, now_time)
+            wx_post_url = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=" + ACCESS_TOKEN
+            for i in push_data.to_user_ids:
+                send_wechat_message(i, now_time, title, detail, link, wx_post_url)
+    else:
+        logging.info(str(id) + "当前没有推送")
 
 
 class RssView(APIView):
@@ -271,17 +372,14 @@ class RssView(APIView):
     @api_view(['POST'])
     def refresh_push(self):
         rss_all = Rss.objects.all()
-        rss_hub_service = read_yaml('rss_hub_service', 'config.yaml')
-        schedule.every(5).seconds.do(push)
-        try:
-            while True:
-                schedule.run_pending()
-                time.sleep(1)
-        except:
-            pass
+        scheduler = BackgroundScheduler()
+        for i in rss_all:
+            if not i.push_id is None or i.push_id == '':
+                scheduler.add_job(check_rss, 'interval', seconds=eval(i.detection_time * 60), args=(i.timestamp, i.rss_uri, i.push_id, i.id))
+        scheduler.start()
         Response = {
             "code": 0,
-            "message": "没写",
+            "message": "刷新成功",
         }
         return JsonResponse(Response)
 
