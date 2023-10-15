@@ -1,2 +1,11 @@
+# 数据库
+ENGINE: django.db.backends.postgresql
+DB_NAME: rsspush
+DB_USER: postgres
+DB_PASSWORD:
+DB_HOST:
+DB_PORT: 5432
+# token秘钥
 token_private_key: j8mR75f473yNJz5yJg2GvmXKcXk3bx
+# rsshub部署的地址
 rss_hub_service: http://127.0.0.1:1200
