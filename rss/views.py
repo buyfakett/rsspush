@@ -59,7 +59,7 @@ class RssView(APIView):
         page_obj = paginator.get_page(page)
         data_list = []
         for i in page_obj:
-            mode_to = model_to_dict(i, exclude='user_id')  # exclude这个是转字典的时候去掉，哪个字段，就是不给哪个字段转成字典
+            mode_to = model_to_dict(i)  # exclude这个是转字典的时候去掉，哪个字段，就是不给哪个字段转成字典
             data_list.append(mode_to)
         Response = {
             "code": 0,

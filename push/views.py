@@ -132,7 +132,7 @@ def check_rss(rss_uri, push_id, id):
         logging.info(str(id) + "当前没有推送")
 
 
-class RssView(APIView):
+class PushView(APIView):
     authentication_classes = [JWTAuthentication, ]
 
     def __init__(self, **kwargs):
