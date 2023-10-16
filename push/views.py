@@ -290,7 +290,7 @@ class RssView(APIView):
             'rss_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='rss表的id'),
         })
 
-    @swagger_auto_schema(value='/api/push/del', method='delete', operation_summary='删除推送接口', request_body=delete_push_request_body, responses={0: base_access_response_schema, 201: 'None'})
+    @swagger_auto_schema(value='/api/push/delete', method='delete', operation_summary='删除推送接口', request_body=delete_push_request_body, responses={0: base_access_response_schema, 201: 'None'})
     @csrf_exempt
     @api_view(['DELETE'])
     def delete_push(self):

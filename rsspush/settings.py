@@ -173,7 +173,7 @@ LOGGING = {
     },
     "root": {"level": "DEBUG", "handlers": ["console"]},
 }
-
+# 项目初始化代码
 from apscheduler.schedulers.background import BackgroundScheduler
 SCHEDULER = BackgroundScheduler()
 SCHEDULER.start()

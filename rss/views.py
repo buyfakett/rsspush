@@ -170,7 +170,7 @@ class RssView(APIView):
         })
     )
 
-    @swagger_auto_schema(value='/api/rss/del', method='delete', operation_summary='删除rss接口', request_body=delete_rss_request_body, responses={0: delete_rss_access_response_schema, 201: 'None'})
+    @swagger_auto_schema(value='/api/rss/delete', method='delete', operation_summary='删除rss接口', request_body=delete_rss_request_body, responses={0: delete_rss_access_response_schema, 201: 'None'})
     @csrf_exempt
     @api_view(['DELETE'])
     def delete_rss(self):
