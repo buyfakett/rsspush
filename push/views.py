@@ -12,7 +12,7 @@ from util.yaml_util import read_yaml
 from rsspush.error_response import error_response
 from rsspush.success_response import success_response
 from datetime import datetime as dt
-from apscheduler.schedulers.background import BackgroundScheduler
+from django.conf import settings
 
 
 def send_ding_message(access_token, keyword, now_time, title, link):
@@ -371,12 +371,16 @@ class RssView(APIView):
     @api_view(['GET'])
     def refresh_push(self):
         rss_all = Rss.objects.all()
-        scheduler = BackgroundScheduler()
-        # scheduler.shutdown()
+        try:
+            old_tasks = settings.SCHEDULER.get_jobs()
+            for task in old_tasks:
+                task.remove()
+        except Exception as e:
+            print(f"Error clearing schedule: {e}")
         for i in rss_all:
             if not i.push_id is None or i.push_id == '':
-                scheduler.add_job(check_rss, 'interval', seconds=i.detection_time * 60, args=(i.rss_uri, i.push_id, i.id))
-        scheduler.start()
+                settings.SCHEDULER.add_job(check_rss, 'interval', seconds=i.detection_time * 60, args=(i.rss_uri, i.push_id, i.id))
+        logging.info('刷新成功')
         Response = {
             "code": 0,
             "message": "刷新成功",
