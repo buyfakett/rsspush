@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from django.core.paginator import Paginator
-import json, logging
+import json, logging, requests
 from django.http import JsonResponse
 from .models import Rss
 from push.models import Push
@@ -105,6 +105,7 @@ class RssView(APIView):
                         "code": 0,
                         "message": "新增成功"
                     }
+                    requests.get(url='http://127.0.0.1:8000/api/push/refresh')
                 else:
                     logging.error(error_response.add_rss_error.value['message'])
                     return JsonResponse(error_response.add_rss_error.value)
@@ -153,6 +154,7 @@ class RssView(APIView):
                         "code": 0,
                         "message": "修改成功"
                     }
+                    requests.get(url='http://127.0.0.1:8000/api/push/refresh')
         return JsonResponse(Response)
 
     delete_rss_request_body = openapi.Schema(
@@ -195,6 +197,7 @@ class RssView(APIView):
                             "code": 0,
                             "message": "删除成功"
                         }
+                        requests.get(url='http://127.0.0.1:8000/api/push/refresh')
                     else:
                         logging.error(error_response.delete_error.value['message'])
                         return JsonResponse(error_response.delete_error.value)

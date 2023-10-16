@@ -198,6 +198,7 @@ class PushView(APIView):
                             "code": 0,
                             "message": "新增成功"
                         }
+                        requests.get(url='http://127.0.0.1:8000/api/push/refresh')
                 elif push_type == 'wechat':
                     if data.get('wechat_template_id') is None or data.get('wechat_app_id') is None or data.get('wechat_to_user_ids') is None:
                         logging.error(error_response.missing_parameter.value['message'])
@@ -215,6 +216,7 @@ class PushView(APIView):
                             "code": 0,
                             "message": "新增成功"
                         }
+                        requests.get(url='http://127.0.0.1:8000/api/push/refresh')
                 else:
                     logging.error(error_response.push_error_parameter.value['message'])
                     return JsonResponse(error_response.push_error_parameter.value)
@@ -260,6 +262,7 @@ class PushView(APIView):
                         "code": 0,
                         "message": "修改成功"
                     }
+                    requests.get(url='http://127.0.0.1:8000/api/push/refresh')
             elif push_type == 'wechat':
                 if data.get('wechat_template_id') is None or data.get('wechat_app_id') is None or data.get('wechat_to_user_ids') is None:
                     logging.error(error_response.missing_parameter.value['message'])
@@ -278,6 +281,7 @@ class PushView(APIView):
                         "code": 0,
                         "message": "修改成功"
                     }
+                    requests.get(url='http://127.0.0.1:8000/api/push/refresh')
             else:
                 logging.error(error_response.push_error_parameter.value['message'])
                 return JsonResponse(error_response.push_error_parameter.value)
@@ -310,6 +314,7 @@ class PushView(APIView):
                     "code": 0,
                     "message": "删除成功"
                 }
+                requests.get(url='http://127.0.0.1:8000/api/push/refresh')
             else:
                 logging.error(error_response.delete_error.value['message'])
                 return JsonResponse(error_response.delete_error.value)
