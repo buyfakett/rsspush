@@ -15,6 +15,8 @@ Including another URLconf
 """
 from django.urls import path, include, re_path
 from django.contrib import admin
+from django.views.static import serve
+from django.conf import settings
 
 from rest_framework import permissions
 from drf_yasg2.views import get_schema_view
@@ -39,6 +41,7 @@ urlpatterns = [
     path('api/push/', include('push.urls')),
     path('api/rss/', include('rss.urls')),
     path('api/user/', include('user.urls')),
+    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
 ]
 
 
