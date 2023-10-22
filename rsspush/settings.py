@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'drf_yasg2',
     'user',
     'rss',
-    'push'
+    'push',
+    'corsheaders',
 ]
 
 REST_FRAMEWORK = {
@@ -56,6 +57,7 @@ REST_FRAMEWORK = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -173,6 +175,50 @@ LOGGING = {
     },
     "root": {"level": "DEBUG", "handlers": ["console"]},
 }
+############# 配置允许访问的域名白名单 #############
+# 允许所有 域名/IP 跨域
+CORS_ALLOW_ALL_ORIGINS = True
+# 配置可跨域访问的 域名/IP
+CORS_ALLOWED_ORIGINS = [
+    'http://127.0.0.1:8000',
+    'http://localhost:8080',
+]
+# 使用正则表达式匹配允许访问的 域名/IP
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://\w+.example.com$",
+]
+############# 配置允许的跨域请求方式 #############
+# 配置允许的请求方式
+CORS_ALLOW_METHODS = [
+    '*', # * 表示允许全部请求头
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS'
+]
+
+############# 配置允许的请求头 #############
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+############# 允许跨域访问Cookie #############
+# 改为True即为可跨域设置Cookie
+CORS_ALLOW_CREDENTIALS = True
+
+
+
+
 # 项目初始化代码
 from apscheduler.schedulers.background import BackgroundScheduler
 SCHEDULER = BackgroundScheduler()
