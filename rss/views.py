@@ -52,7 +52,7 @@ class RssView(APIView):
         pageSize = self.GET.get('pageSize', 20)
         if page == '':
             page = 1
-        if pageSize == '':
+        if pageSize == '' or pageSize > 100:
             pageSize = 20
         rss = Rss.objects.filter(user_id=self.user.id)
         paginator = Paginator(rss, pageSize)
