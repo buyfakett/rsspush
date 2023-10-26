@@ -23,7 +23,10 @@ class JWTAuthentication(BaseAuthentication):
         salt = read_yaml('token_private_key', 'config.yaml')
         # 从请求头中获取token
         # 放的格式 Authorization:JWT xxxxxxxx
-        token = request.META.get('HTTP_AUTHORIZATION')
+        try:
+            token = request.META.get('HTTP_AUTHORIZATION')
+        except:
+            raise AuthenticationFailed('没有携带token')
         # 获取url
         url = request.get_full_path()
         # 判断url在不在白名单中
