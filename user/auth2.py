@@ -5,7 +5,6 @@ from rest_framework.authentication import BaseAuthentication
 from util.yaml_util import read_yaml
 from .models import User
 
-
 # 定义一个白名单 注册登录接口 随便访问
 white_list = [
     '/api/docs/',
@@ -23,10 +22,7 @@ class JWTAuthentication(BaseAuthentication):
         salt = read_yaml('token_private_key', 'config.yaml')
         # 从请求头中获取token
         # 放的格式 Authorization:JWT xxxxxxxx
-        try:
-            token = request.META.get('HTTP_AUTHORIZATION')
-        except:
-            raise AuthenticationFailed('没有携带token')
+        token = request.META.get('HTTP_AUTHORIZATION')
         # 获取url
         url = request.get_full_path()
         # 判断url在不在白名单中
@@ -50,4 +46,4 @@ class JWTAuthentication(BaseAuthentication):
             user = User.objects.get(id=verified_payload.get('user_id'))
             # 认证通过，返回token
             return user, token  # request.user/auth
-        return token
+        return
