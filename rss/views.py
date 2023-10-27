@@ -48,8 +48,8 @@ class RssView(APIView):
     @csrf_exempt
     @api_view(['GET'])
     def rss_list(self):
-        page = self.GET.get('page', 1)
-        pageSize = self.GET.get('pageSize', 20)
+        page = self.GET.get('page')
+        pageSize = self.GET.get('pageSize')
         if page == '':
             page = 1
         if pageSize == '' or pageSize > '100':
