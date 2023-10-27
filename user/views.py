@@ -130,9 +130,9 @@ class UserView(APIView):
             'password': openapi.Schema(type=openapi.TYPE_STRING, description='密码')
         })
 
-    @swagger_auto_schema(value='/api/user/reset', method='post', operation_summary='修改密码接口', request_body=change_password_request_body, responses={0: access_response_schema, 201: 'None'})
+    @swagger_auto_schema(value='/api/user/reset', method='put', operation_summary='修改密码接口', request_body=change_password_request_body, responses={0: access_response_schema, 201: 'None'})
     @csrf_exempt
-    @api_view(['POST'])
+    @api_view(['PUT'])
     def change_password(self):
         data = json.loads(self.body.decode('utf-8'))
         if data.get('old_password') is None or data.get('password') is None:

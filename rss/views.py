@@ -132,9 +132,9 @@ class RssView(APIView):
         })
     )
 
-    @swagger_auto_schema(value='/api/rss/edit', method='post', operation_summary='编辑rss接口', request_body=edit_rss_request_body, responses={0: edit_rss_access_response_schema, 201: 'None'})
+    @swagger_auto_schema(value='/api/rss/edit', method='Put', operation_summary='编辑rss接口', request_body=edit_rss_request_body, responses={0: edit_rss_access_response_schema, 201: 'None'})
     @csrf_exempt
-    @api_view(['POST'])
+    @api_view(['PUT'])
     def edit_rss(self):
         data = json.loads(self.body.decode('utf-8'))
         if data.get('rss_uri') is None or data.get('id') is None:

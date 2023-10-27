@@ -235,9 +235,9 @@ class PushView(APIView):
             'wechat_to_user_ids': openapi.Schema(type=openapi.TYPE_STRING, description='微信发送的用户们'),
         })
 
-    @swagger_auto_schema(value='/api/push/edit', method='post', operation_summary='编辑推送接口', request_body=edit_push_request_body, responses={0: base_access_response_schema, 201: 'None'})
+    @swagger_auto_schema(value='/api/push/edit', method='put', operation_summary='编辑推送接口', request_body=edit_push_request_body, responses={0: base_access_response_schema, 201: 'None'})
     @csrf_exempt
-    @api_view(['POST'])
+    @api_view(['PUT'])
     def edit_push(self):
         data = json.loads(self.body.decode('utf-8'))
         if data.get('push_type') is None or data.get('id') is None:
