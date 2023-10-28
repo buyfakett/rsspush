@@ -14,6 +14,7 @@ from rsspush.success_response import success_response
 from datetime import datetime as dt
 from django.conf import settings
 
+TEST = True
 
 def send_ding_message(access_token, keyword, now_time, title, link):
     test_data = {
@@ -198,7 +199,8 @@ class PushView(APIView):
                             "code": 0,
                             "message": "新增成功"
                         }
-                        requests.get(url='http://127.0.0.1:8000/api/push/refresh')
+                        if not TEST:
+                            requests.get(url='http://127.0.0.1:8000/api/push/refresh')
                 elif push_type == 'wechat':
                     if data.get('wechat_template_id') is None or data.get('wechat_app_id') is None or data.get('wechat_to_user_ids') is None:
                         logging.error(error_response.missing_parameter.value['message'])
@@ -216,7 +218,8 @@ class PushView(APIView):
                             "code": 0,
                             "message": "新增成功"
                         }
-                        requests.get(url='http://127.0.0.1:8000/api/push/refresh')
+                        if not TEST:
+                            requests.get(url='http://127.0.0.1:8000/api/push/refresh')
                 else:
                     logging.error(error_response.push_error_parameter.value['message'])
                     return JsonResponse(error_response.push_error_parameter.value)
@@ -231,6 +234,7 @@ class PushView(APIView):
             'ding_access_token': openapi.Schema(type=openapi.TYPE_STRING, description='钉钉参数'),
             'ding_keyword': openapi.Schema(type=openapi.TYPE_STRING, description='钉钉自定义关键词'),
             'wechat_template_id': openapi.Schema(type=openapi.TYPE_STRING, description='微信模板id'),
+            'detection_time': openapi.Schema(type=openapi.TYPE_STRING, description='检测的时间(分钟）'),
             'wechat_app_id': openapi.Schema(type=openapi.TYPE_STRING, description='微信appId'),
             'wechat_to_user_ids': openapi.Schema(type=openapi.TYPE_STRING, description='微信发送的用户们'),
         })
@@ -247,41 +251,51 @@ class PushView(APIView):
             id = data['id']
             push_type = data['push_type']
             if push_type == 'ding':
-                if data.get('ding_access_token') is None or data.get('ding_keyword') is None:
+                if data.get('ding_access_token') is None or data.get('ding_keyword') is None or data.get('detection_time') is None:
                     logging.error(error_response.missing_parameter.value['message'])
                     return JsonResponse(error_response.missing_parameter.value)
                 else:
                     ding_access_token = data['ding_access_token']
                     ding_keyword = data['ding_keyword']
+                    detection_time = data['detection_time']
                     data = Push.objects.get(id=id)
+                    rss_data = Rss.objects.get(push_id=id)
                     data.ding_keyword = ding_keyword
                     data.ding_access_token = ding_access_token
+                    rss_data.detection_time = detection_time
                     data.save()
+                    rss_data.save()
                     logging.info('用户' + str(self.user.id) + '已修改push' + str(id))
                     Response = {
                         "code": 0,
                         "message": "修改成功"
                     }
-                    requests.get(url='http://127.0.0.1:8000/api/push/refresh')
+                    if not TEST:
+                        requests.get(url='http://127.0.0.1:8000/api/push/refresh')
             elif push_type == 'wechat':
-                if data.get('wechat_template_id') is None or data.get('wechat_app_id') is None or data.get('wechat_to_user_ids') is None:
+                if data.get('wechat_template_id') is None or data.get('wechat_app_id') is None or data.get('wechat_to_user_ids') is None or data.get('detection_time') is None:
                     logging.error(error_response.missing_parameter.value['message'])
                     return JsonResponse(error_response.missing_parameter.value)
                 else:
                     wechat_template_id = data['wechat_template_id']
                     wechat_app_id = data['wechat_app_id']
                     wechat_to_user_ids = data['wechat_to_user_ids']
+                    detection_time = data['detection_time']
                     data = Push.objects.get(id=id)
+                    rss_data = Rss.objects.get(push_id=id)
                     data.wechat_template_id = wechat_template_id
                     data.wechat_app_id = wechat_app_id
                     data.wechat_to_user_ids = wechat_to_user_ids
+                    rss_data.detection_time = detection_time
                     data.save()
+                    rss_data.save()
                     logging.info('用户' + str(self.user.id) + '已修改push' + str(id))
                     Response = {
                         "code": 0,
                         "message": "修改成功"
                     }
-                    requests.get(url='http://127.0.0.1:8000/api/push/refresh')
+                    if not TEST:
+                        requests.get(url='http://127.0.0.1:8000/api/push/refresh')
             else:
                 logging.error(error_response.push_error_parameter.value['message'])
                 return JsonResponse(error_response.push_error_parameter.value)
@@ -314,7 +328,8 @@ class PushView(APIView):
                     "code": 0,
                     "message": "删除成功"
                 }
-                requests.get(url='http://127.0.0.1:8000/api/push/refresh')
+                if not TEST:
+                    requests.get(url='http://127.0.0.1:8000/api/push/refresh')
             else:
                 logging.error(error_response.delete_error.value['message'])
                 return JsonResponse(error_response.delete_error.value)
@@ -330,11 +345,13 @@ class PushView(APIView):
             'code': openapi.Schema(type=openapi.TYPE_INTEGER, description='code'),
             'message': openapi.Schema(type=openapi.TYPE_STRING, description='message'),
             'data': openapi.Schema(type=openapi.TYPE_OBJECT, description='data', properties={
-                'push_type': openapi.Schema(type=openapi.TYPE_STRING, description='钉钉推送还是微信测试号推送(钉钉：ding，微信测试号：wechat)"'),
+                'id': openapi.Schema(type=openapi.TYPE_INTEGER, description='push_id'),
+                'push_type': openapi.Schema(type=openapi.TYPE_STRING, description='钉钉推送还是微信测试号推送(钉钉：ding，微信测试号：wechat)'),
                 'ding_access_token': openapi.Schema(type=openapi.TYPE_STRING, description='钉钉参数'),
                 'ding_keyword': openapi.Schema(type=openapi.TYPE_STRING, description='钉钉自定义关键词'),
                 'wechat_template_id': openapi.Schema(type=openapi.TYPE_STRING, description='微信模板id'),
                 'wechat_app_id': openapi.Schema(type=openapi.TYPE_STRING, description='微信appId'),
+                'detection_time': openapi.Schema(type=openapi.TYPE_STRING, description='检测的时间(分钟）'),
                 'wechat_to_user_ids': openapi.Schema(type=openapi.TYPE_STRING, description='微信发送的用户们'),
             }),
         })
@@ -351,6 +368,8 @@ class PushView(APIView):
             "wechat_template_id": "",
             "wechat_app_id": "",
             "wechat_to_user_ids": "",
+            "id": "",
+            "detection_time": "",
         }
         rss_id = self.GET.get('rss_id')
         if rss_id is None or rss_id == '':
@@ -363,11 +382,14 @@ class PushView(APIView):
                 return success_response(0, "无推送配置", data)
             else:
                 push_data = Push.objects.get(id=rss_push_id)
+                rss_data = Rss.objects.get(id=rss_id)
                 data['push_type'] = push_data.push_type
                 data['ding_access_token'] = push_data.ding_access_token
                 data['ding_keyword'] = push_data.ding_keyword
                 data['wechat_template_id'] = push_data.wechat_template_id
                 data['wechat_to_user_ids'] = push_data.wechat_to_user_ids
+                data['detection_time'] = rss_data.detection_time
+                data['id'] = push_data.id
                 logging.info('用户' + str(self.user.id) + 'push' + str(rss_push_id) + '获取成功')
                 return success_response(0, "获取成功", data)
 
