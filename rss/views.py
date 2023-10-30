@@ -195,16 +195,15 @@ class RssView(APIView):
                 if push_id is not None:
                     Push.objects.get(id=push_id).delete()
                     logging.info('用户' + str(self.user.id) + '已删除push' + str(push_id))
+                if Rss.objects.get(id=id).delete():
+                    logging.info('用户' + str(self.user.id) + '已删除rss' + str(id))
+                    Response = {
+                        "code": 0,
+                        "message": "删除成功"
+                    }
+                    requests.get(url='http://127.0.0.1:8000/api/push/refresh')
                 else:
-                    if Rss.objects.get(id=id).delete():
-                        logging.info('用户' + str(self.user.id) + '已删除rss' + str(id))
-                        Response = {
-                            "code": 0,
-                            "message": "删除成功"
-                        }
-                        requests.get(url='http://127.0.0.1:8000/api/push/refresh')
-                    else:
-                        logging.error(error_response.delete_error.value['message'])
-                        return JsonResponse(error_response.delete_error.value)
+                    logging.error(error_response.delete_error.value['message'])
+                    return JsonResponse(error_response.delete_error.value)
         return JsonResponse(Response)
 
