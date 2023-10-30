@@ -145,24 +145,28 @@ class UserView(APIView):
                 logging.error(error_response.missing_parameter.value['message'])
                 return JsonResponse(error_response.missing_parameter.value)
             else:
-                Encry_old_password = hashlib.md5()  # 实例化md5
-                Encry_old_password.update(old_password.encode('utf-8'))  # 字符串字节加密
-                old_password = Encry_old_password.hexdigest()  # 字符串加密
-                Encry_password = hashlib.md5()  # 实例化md5
-                Encry_password.update(password.encode('utf-8'))  # 字符串字节加密
-                password = Encry_password.hexdigest()  # 字符串加密
-                if self.user.password != old_password:
-                    logging.error(error_response.old_password_error.value['message'])
-                    return JsonResponse(error_response.old_password_error.value)
+                if not re.match('^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,16}$', str(password)):
+                    logging.error(error_response.password_format_error.value['message'])
+                    return JsonResponse(error_response.password_format_error.value)
                 else:
-                    self.user.password = password
-                    self.user.token = create_token(user_id=self.user.id)
-                    self.user.save()
-                    logging.info('修改密码成功')
-                    Response_data = {
-                            "user_id": self.user.id,
-                            "username": self.user.username,
-                            "phone": str(self.user.phone.replace(self.user.phone[3:7], '****')),
-                            "token": str(self.user.token)
-                        }
-                    return success_response(0, "修改密码成功", Response_data)
+                    Encry_old_password = hashlib.md5()  # 实例化md5
+                    Encry_old_password.update(old_password.encode('utf-8'))  # 字符串字节加密
+                    old_password = Encry_old_password.hexdigest()  # 字符串加密
+                    Encry_password = hashlib.md5()  # 实例化md5
+                    Encry_password.update(password.encode('utf-8'))  # 字符串字节加密
+                    password = Encry_password.hexdigest()  # 字符串加密
+                    if self.user.password != old_password:
+                        logging.error(error_response.old_password_error.value['message'])
+                        return JsonResponse(error_response.old_password_error.value)
+                    else:
+                        self.user.password = password
+                        self.user.token = create_token(user_id=self.user.id)
+                        self.user.save()
+                        logging.info('修改密码成功')
+                        Response_data = {
+                                "user_id": self.user.id,
+                                "username": self.user.username,
+                                "phone": str(self.user.phone.replace(self.user.phone[3:7], '****')),
+                                "token": str(self.user.token)
+                            }
+                        return success_response(0, "修改密码成功", Response_data)
