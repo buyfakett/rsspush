@@ -14,7 +14,7 @@ from rsspush.success_response import success_response
 from datetime import datetime as dt
 from django.conf import settings
 
-TEST = True
+TEST = False
 
 def send_ding_message(access_token, keyword, now_time, title, link):
     test_data = {
