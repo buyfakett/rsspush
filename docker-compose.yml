@@ -6,7 +6,7 @@ networks:
 
 services:
   server:
-    image: gitea/gitea:1.20.5
+    image: rsspush
     container_name: rsspush
     restart: always
     networks:
@@ -19,6 +19,7 @@ services:
       - "8003:8000"
     depends_on:
       - db
+      - rsshub
 
   db:
     image: postgres:14.2
@@ -31,3 +32,13 @@ services:
       - rsspush
     volumes:
       - ./postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  rsshub:
+    image: diygod/rsshub
+    restart: always
+    ports:
+      - '1200:1200'
+    networks:
+      - rsspush
