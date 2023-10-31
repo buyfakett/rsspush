@@ -6,7 +6,7 @@ networks:
 
 services:
   server:
-    image: rsspush
+    image: buyfakett/rsspush
     container_name: rsspush
     restart: always
     networks:
