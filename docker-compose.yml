@@ -16,7 +16,7 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     ports:
-      - "8003:8000"
+      - "8000:8000"
     depends_on:
       - db
       - rsshub
@@ -24,6 +24,7 @@ services:
   db:
     image: postgres:14.2
     restart: always
+    container_name: rsspush-db
     environment:
       - POSTGRES_USER=rsspush
       - POSTGRES_PASSWORD=rsspush
@@ -37,6 +38,7 @@ services:
 
   rsshub:
     image: diygod/rsshub
+    container_name: rsspush-rsshub
     restart: always
     ports:
       - '1200:1200'
