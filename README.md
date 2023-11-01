@@ -1,10 +1,10 @@
 # rsspush
 
-这是一个检测bilibiliup主动态，自动推送到微信测试号的py脚本
+这是一个检测rss状态，来推送到微信测试号和钉钉机器人的工具，[检测单bilibiliup主跳转地址](https://github.com/buyfakett/biliup_rsspush_wechat)
 
 ### 前置：
 
-需要有docker环境，可以查看[我的初始化脚本](https://gitee.com/buyfakett/centos7_initialization/blob/master/initialization.sh)
+需要有docker环境，可以查看[我的初始化脚本](https://gitee.com/buyfakett/centos7_initialization/blob/master/initialization.sh)	
 中的install_docker方法来安装
 
 ### [文档](https://buyfakett.github.io/rsspush/)

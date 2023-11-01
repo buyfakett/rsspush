@@ -1,6 +1,6 @@
 <h1 align="center">rsspush</h1>
 
-这是一个检测bilibiliup主动态，自动推送到微信测试号的py脚本
+这是一个检测rss状态，来推送到微信测试号和钉钉机器人的工具，[检测单bilibiliup主跳转地址](https://github.com/buyfakett/biliup_rsspush_wechat)
 
 前端项目：[rsspush-web](https://github.com/buyfakett/rsspush-web)
 
