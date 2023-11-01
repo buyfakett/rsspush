@@ -27,6 +27,12 @@ docker-compose up -d
 
 # setp4：运行前端（下载前端代码到nginx配置中）
 地址：https://github.com/buyfakett/rsspush-web/tree/dist
+
+# setp5：应用数据库
+docker exec -it rsspush python3 manage.py makemigrations rss
+docker exec -it rsspush python3 manage.py makemigrations push
+docker exec -it rsspush python3 manage.py makemigrations user
+docker exec -it rsspush python3 manage.py migrate
 ```
 
 ### 配置文件示例
